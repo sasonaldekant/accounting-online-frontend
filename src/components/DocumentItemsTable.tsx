@@ -63,6 +63,9 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
 
   const focusRefs = useRef<Map<string, HTMLElement>>(new Map());
   const listRef = useRef<FixedSizeListType>(null);
+  const handledErrorItemsRef = useRef<Set<number>>(new Set());
+  const optimisticSnapshotsRef = useRef<Map<number, DocumentLineItem>>(new Map());
+  const lastKnownItemsRef = useRef<Map<number, DocumentLineItem>>(new Map());
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: taxRates, isLoading: taxRatesLoading } = useTaxRates();
@@ -85,6 +88,11 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
       const loadedItems = await api.items.getItems(documentId);
       setItems(loadedItems);
       initializeETags(loadedItems);
+      lastKnownItemsRef.current = new Map(
+        loadedItems.map((item) => [item.id, { ...item }])
+      );
+      optimisticSnapshotsRef.current.clear();
+      handledErrorItemsRef.current.clear();
     } catch (err) {
       const message =
         typeof err === 'object' && err !== null && 'message' in err
@@ -100,12 +108,71 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
     loadItems();
   }, [loadItems]);
 
+  useEffect(() => {
+    Object.values(autoSaveMap).forEach((state) => {
+      if (!state?.id) {
+        return;
+      }
+
+      if (state.status === 'error') {
+        const snapshot = optimisticSnapshotsRef.current.get(state.id);
+        const lastKnown = lastKnownItemsRef.current.get(state.id);
+        if (snapshot || lastKnown) {
+          const fallback = snapshot ?? lastKnown;
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === state.id && fallback
+                ? ({ ...fallback } as DocumentLineItem)
+                : item
+            )
+          );
+        }
+
+        optimisticSnapshotsRef.current.delete(state.id);
+
+        if (handledErrorItemsRef.current.has(state.id)) {
+          return;
+        }
+
+        handledErrorItemsRef.current.add(state.id);
+        (async () => {
+          const refreshed = await refreshItem(state.id);
+          if (refreshed) {
+            setItems((prev) =>
+              prev.map((item) =>
+                item.id === state.id ? (refreshed as DocumentLineItem) : item
+              )
+            );
+            lastKnownItemsRef.current.set(state.id, { ...refreshed });
+          }
+        })();
+      } else if (state.status === 'saved') {
+        optimisticSnapshotsRef.current.delete(state.id);
+        handledErrorItemsRef.current.delete(state.id);
+        const currentItem = items.find((item) => item.id === state.id);
+        if (currentItem) {
+          lastKnownItemsRef.current.set(state.id, { ...currentItem });
+        }
+      } else {
+        handledErrorItemsRef.current.delete(state.id);
+      }
+    });
+  }, [autoSaveMap, refreshItem, items]);
+
   const handleValueChange = useCallback(
     (itemId: number, field: string, value: string | number) => {
       setItems((prev) =>
-        prev.map((item) =>
-          item.id === itemId ? ({ ...item, [field]: value } as DocumentLineItem) : item
-        )
+        prev.map((item) => {
+          if (item.id !== itemId) {
+            return item;
+          }
+
+          if (!optimisticSnapshotsRef.current.has(itemId)) {
+            optimisticSnapshotsRef.current.set(itemId, { ...item });
+          }
+
+          return { ...item, [field]: value } as DocumentLineItem;
+        })
       );
       debouncedSave(itemId, field, value);
     },
@@ -123,6 +190,10 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
     try {
       const created = await api.items.createItem(documentId, newItem);
       setItems((prev) => [...prev, created as unknown as DocumentLineItem]);
+      lastKnownItemsRef.current.set(
+        created.id,
+        created as unknown as DocumentLineItem
+      );
     } catch (err) {
       alert('Greška pri kreiranju stavke');
     }
@@ -133,6 +204,7 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
       try {
         await api.items.deleteItem(documentId, itemId);
         setItems((prev) => prev.filter((item) => item.id !== itemId));
+        lastKnownItemsRef.current.delete(itemId);
         setAnchorEl(null);
       } catch (err) {
         alert('Greška pri brisanju stavke');
@@ -160,6 +232,10 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
               ? (refreshed as unknown as DocumentLineItem)
               : item
           )
+        );
+        lastKnownItemsRef.current.set(
+          conflictItemId,
+          refreshed as unknown as DocumentLineItem
         );
       }
     }
