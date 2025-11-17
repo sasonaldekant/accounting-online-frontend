@@ -36,6 +36,7 @@ import { useArticles, useTaxRates } from '../hooks/useCombos';
 import { api } from '../api/endpoints';
 import EditableCell, { CellNavigationDirection } from './EditableCell';
 import ConflictDialog from './ConflictDialog';
+import { useDocumentStore, useUIStore } from '../store';
 
 interface DocumentItemsTableProps {
   documentId: number;
@@ -57,8 +58,6 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
   const [items, setItems] = useState<DocumentLineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
-  const [conflictItemId, setConflictItemId] = useState<number | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
@@ -72,18 +71,20 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
     useAutoSaveItems({
       documentId,
       onConflict: (itemId) => {
-        setConflictItemId(itemId);
-        setConflictDialogOpen(true);
+        openConflictDialog({
+          itemId,
+          message: 'Stavka je izmenjena od drugog korisnika.',
+        });
       },
     });
 
   const loadItems = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       const loadedItems = await api.items.getItems(documentId);
-      setItems(loadedItems as unknown as DocumentLineItem[]);
-      initializeETags(loadedItems as unknown as DocumentLineItem[]);
+      setItems(loadedItems);
+      initializeETags(loadedItems);
     } catch (err) {
       const message =
         typeof err === 'object' && err !== null && 'message' in err
@@ -91,9 +92,9 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
           : 'Greška pri učitavanju stavki';
       setError(message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [documentId, initializeETags]);
+  }, [documentId, initializeETags, setItems, setLoading]);
 
   useEffect(() => {
     loadItems();
@@ -169,7 +170,7 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
     if (conflictItemId) {
       const item = items.find((i) => i.id === conflictItemId);
       if (item) {
-        await forceUpdateItem(conflictItemId, 'quantity', item.quantity);
+        await forceUpdateItem(conflictData.itemId, 'quantity', item.quantity);
       }
     }
     setConflictDialogOpen(false);
@@ -569,11 +570,12 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
       </Menu>
 
       <ConflictDialog
-        isOpen={conflictDialogOpen}
-        itemId={conflictItemId || undefined}
+        isOpen={showConflictDialog}
+        itemId={conflictData?.itemId || undefined}
+        errorMessage={conflictData?.message}
         onRefresh={handleConflictRefresh}
         onOverwrite={handleConflictOverwrite}
-        onCancel={() => setConflictDialogOpen(false)}
+        onCancel={closeConflictDialog}
       />
     </>
   );
