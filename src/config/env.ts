@@ -4,6 +4,7 @@ export const ENV = {
   API_TIMEOUT: 30000,
   AUTOSAVE_DEBOUNCE: 800,
   ENABLE_MOCK_DATA: import.meta.env.VITE_ENABLE_MOCK_DATA === 'true',
+  JWT_TOKEN: import.meta.env.VITE_JWT_TOKEN || '',
 } as const;
 
 export type Env = typeof ENV;
