@@ -1,24 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Paper, Tabs, Tab, Typography, Divider, Skeleton } from '@mui/material';
-import type {
-  DependentCost,
-  DocumentDetails,
-  DocumentLineItem,
-} from '../../types';
+import type { DocumentDto, DocumentLineItemDto } from '../../types/api.types';
 import { DocumentItemsTable } from '../DocumentItemsTable';
 import { DocumentHeader } from './DocumentHeader';
 import { DocumentCostsTable } from './DocumentCostsTable';
 
 export interface DocumentFormProps {
   documentId: number;
-  document: DocumentDetails | null;
-  items: DocumentLineItem[];
-  costs: DependentCost[];
+  document: DocumentDto | null;
+  items: DocumentLineItemDto[];
   isLoading: boolean;
-  onDocumentChange?: (updates: Partial<DocumentDetails>) => void;
-  onAddCost: (cost: DependentCost) => void;
-  onUpdateCost: (id: number, updates: Partial<DependentCost>) => void;
-  onDeleteCost: (id: number) => void;
+  onDocumentChange?: (updates: Partial<DocumentDto>) => void;
 }
 
 type DocumentTab = 'header' | 'items' | 'costs';
@@ -27,35 +19,29 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
   documentId,
   document,
   items,
-  costs,
   isLoading,
   onDocumentChange,
-  onAddCost,
-  onUpdateCost,
-  onDeleteCost,
 }) => {
   const [activeTab, setActiveTab] = useState<DocumentTab>('header');
 
-  const summary = useMemo(() => ({
-    itemsCount: items.length,
-    totalAmount: document?.totalAmount ?? 0,
-  }), [document?.totalAmount, items.length]);
+  const summary = useMemo(
+    () => ({
+      itemsCount: items.length,
+      totalAmount: document?.totalAmountGross ?? 0,
+      totalNet: document?.totalAmountNet ?? 0,
+      totalVat: document?.totalAmountVat ?? 0,
+    }),
+    [document, items.length]
+  );
 
-  const currency = document?.currency ?? 'RSD';
+  const currency = 'RSD'; // TODO: Get from document when backend supports
 
   const renderContent = () => {
     switch (activeTab) {
       case 'items':
         return <DocumentItemsTable documentId={documentId} />;
       case 'costs':
-        return (
-          <DocumentCostsTable
-            costs={costs}
-            onAddCost={onAddCost}
-            onUpdateCost={onUpdateCost}
-            onDeleteCost={onDeleteCost}
-          />
-        );
+        return <DocumentCostsTable documentId={documentId} />;
       case 'header':
       default:
         return <DocumentHeader document={document} onChange={onDocumentChange} />;
@@ -78,7 +64,8 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
               <Skeleton width={180} />
             ) : (
               <>
-                {document?.partnerName ?? 'Nepoznat partner'} · {document?.status ?? 'Draft'}
+                {document?.partnerName ?? 'Nepoznat partner'} •{' '}
+                {document?.organizationalUnitName ?? 'Nepoznat magacin'}
               </>
             )}
           </Typography>
@@ -93,6 +80,12 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
           </Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
             Vrednost dokumenta
+          </Typography>
+          <Typography variant="caption" display="block" color="text.secondary">
+            Neto: {isLoading ? <Skeleton width={80} sx={{ display: 'inline-block' }} /> : summary.totalNet.toLocaleString('sr-RS', { style: 'currency', currency })}
+          </Typography>
+          <Typography variant="caption" display="block" color="text.secondary">
+            PDV: {isLoading ? <Skeleton width={80} sx={{ display: 'inline-block' }} /> : summary.totalVat.toLocaleString('sr-RS', { style: 'currency', currency })}
           </Typography>
           <Typography variant="h6">
             {isLoading ? (
@@ -119,7 +112,7 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
       >
         <Tab label="Zaglavlje" value="header" />
         <Tab label={`Stavke (${items.length})`} value="items" />
-        <Tab label={`Troškovi (${costs.length})`} value="costs" />
+        <Tab label="Troškovi" value="costs" />
       </Tabs>
 
       {renderContent()}
