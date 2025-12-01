@@ -18,7 +18,7 @@ import { api } from '../api';
  * Custom hook za sve 11 Stored Procedures
  * Koristi React Query za kesiranje i automatsku invalidaciju
  * 
- * UPDATED: TanStack Query v4 object syntax with explicit generics
+ * SYNTAX: TanStack Query v4.36.1 positional arguments
  */
 
 // ==========================================
@@ -47,12 +47,14 @@ const queryKeys = {
  * SP 1: Svi partneri
  */
 export const usePartners = (): UseQueryResult<PartnerComboDto[], unknown> => {
-  return useQuery<PartnerComboDto[], Error, PartnerComboDto[], readonly ['lookups', 'partners']>({
-    queryKey: queryKeys.partners,
-    queryFn: async () => api.lookup.getPartners(),
-    staleTime: 5 * 60 * 1000, // 5 minuta
-    gcTime: 30 * 60 * 1000, // 30 minuta (v4: gcTime replaces cacheTime)
-  });
+  return useQuery(
+    queryKeys.partners,
+    async () => api.lookup.getPartners(),
+    {
+      staleTime: 5 * 60 * 1000, // 5 minuta
+      gcTime: 30 * 60 * 1000, // 30 minuta (v4: gcTime replaces cacheTime)
+    }
+  );
 };
 
 /**
@@ -61,12 +63,14 @@ export const usePartners = (): UseQueryResult<PartnerComboDto[], unknown> => {
 export const useOrgUnits = (
   docTypeId: string = 'UR'
 ): UseQueryResult<OrganizationalUnitComboDto[], unknown> => {
-  return useQuery<OrganizationalUnitComboDto[], Error, OrganizationalUnitComboDto[], readonly ['lookups', 'orgUnits', string]>({
-    queryKey: queryKeys.orgUnits(docTypeId),
-    queryFn: async () => api.lookup.getOrganizationalUnits(docTypeId),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.orgUnits(docTypeId),
+    async () => api.lookup.getOrganizationalUnits(docTypeId),
+    {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    }
+  );
 };
 
 /**
@@ -76,60 +80,70 @@ export const useTaxationMethods = (): UseQueryResult<
   TaxationMethodComboDto[],
   unknown
 > => {
-  return useQuery<TaxationMethodComboDto[], Error, TaxationMethodComboDto[], readonly ['lookups', 'taxationMethods']>({
-    queryKey: queryKeys.taxationMethods,
-    queryFn: async () => api.lookup.getTaxationMethods(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.taxationMethods,
+    async () => api.lookup.getTaxationMethods(),
+    {
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+    }
+  );
 };
 
 /**
  * SP 4: Referenti (zaposleni)
  */
 export const useReferents = (): UseQueryResult<ReferentComboDto[], unknown> => {
-  return useQuery<ReferentComboDto[], Error, ReferentComboDto[], readonly ['lookups', 'referents']>({
-    queryKey: queryKeys.referents,
-    queryFn: async () => api.lookup.getReferents(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.referents,
+    async () => api.lookup.getReferents(),
+    {
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+    }
+  );
 };
 
 /**
  * SP 5: ND dokumenti
  */
 export const useDocumentsND = (): UseQueryResult<ReferenceDocumentComboDto[], unknown> => {
-  return useQuery<ReferenceDocumentComboDto[], Error, ReferenceDocumentComboDto[], readonly ['lookups', 'documentsND']>({
-    queryKey: queryKeys.documentsND,
-    queryFn: async () => api.lookup.getReferenceDocuments('ND'),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.documentsND,
+    async () => api.lookup.getReferenceDocuments('ND'),
+    {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    }
+  );
 };
 
 /**
  * SP 6: Poreske stope
  */
 export const useTaxRates = (): UseQueryResult<TaxRateComboDto[], unknown> => {
-  return useQuery<TaxRateComboDto[], Error, TaxRateComboDto[], readonly ['lookups', 'taxRates']>({
-    queryKey: queryKeys.taxRates,
-    queryFn: async () => api.lookup.getTaxRates(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.taxRates,
+    async () => api.lookup.getTaxRates(),
+    {
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+    }
+  );
 };
 
 /**
  * SP 7: Artikli
  */
 export const useArticles = (): UseQueryResult<ArticleComboDto[], unknown> => {
-  return useQuery<ArticleComboDto[], Error, ArticleComboDto[], readonly ['lookups', 'articles']>({
-    queryKey: queryKeys.articles,
-    queryFn: async () => api.lookup.getArticles(),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.articles,
+    async () => api.lookup.getArticles(),
+    {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    }
+  );
 };
 
 /**
@@ -138,25 +152,29 @@ export const useArticles = (): UseQueryResult<ArticleComboDto[], unknown> => {
 export const useDocumentCosts = (
   documentId: number
 ): UseQueryResult<DocumentCostDto[], unknown> => {
-  return useQuery<DocumentCostDto[], Error, DocumentCostDto[], readonly ['lookups', 'documentCosts', number]>({
-    queryKey: queryKeys.documentCosts(documentId),
-    queryFn: async () => api.cost.list(documentId),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    enabled: !!documentId, // Samo ako je documentId proslezen
-  });
+  return useQuery(
+    queryKeys.documentCosts(documentId),
+    async () => api.cost.list(documentId),
+    {
+      staleTime: 2 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      enabled: !!documentId, // Samo ako je documentId proslezen
+    }
+  );
 };
 
 /**
  * SP 9: Vrste troskova
  */
 export const useCostTypes = (): UseQueryResult<CostTypeComboDto[], unknown> => {
-  return useQuery<CostTypeComboDto[], Error, CostTypeComboDto[], readonly ['lookups', 'costTypes']>({
-    queryKey: queryKeys.costTypes,
-    queryFn: async () => api.lookup.getCostTypes(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
+  return useQuery(
+    queryKeys.costTypes,
+    async () => api.lookup.getCostTypes(),
+    {
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+    }
+  );
 };
 
 /**
@@ -166,12 +184,14 @@ export const useCostDistributionMethods = (): UseQueryResult<
   CostDistributionMethodComboDto[],
   unknown
 > => {
-  return useQuery<CostDistributionMethodComboDto[], Error, CostDistributionMethodComboDto[], readonly ['lookups', 'costDistributionMethods']>({
-    queryKey: queryKeys.costDistributionMethods,
-    queryFn: async () => api.lookup.getCostDistributionMethods(),
-    staleTime: Infinity, // Nikad se ne menja
-    gcTime: Infinity,
-  });
+  return useQuery(
+    queryKeys.costDistributionMethods,
+    async () => api.lookup.getCostDistributionMethods(),
+    {
+      staleTime: Infinity, // Nikad se ne menja
+      gcTime: Infinity,
+    }
+  );
 };
 
 /**
@@ -180,13 +200,15 @@ export const useCostDistributionMethods = (): UseQueryResult<
 export const useCostArticles = (
   documentId: number
 ): UseQueryResult<DocumentLineItemDto[], unknown> => {
-  return useQuery<DocumentLineItemDto[], Error, DocumentLineItemDto[], readonly ['lookups', 'costArticles', number]>({
-    queryKey: queryKeys.costArticles(documentId),
-    queryFn: async () => api.lineItem.list(documentId),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    enabled: !!documentId,
-  });
+  return useQuery(
+    queryKeys.costArticles(documentId),
+    async () => api.lineItem.list(documentId),
+    {
+      staleTime: 2 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      enabled: !!documentId,
+    }
+  );
 };
 
 // ==========================================
@@ -208,9 +230,9 @@ export interface AllCombos {
 export const useAllCombos = (
   docTypeId: string = 'UR'
 ): UseQueryResult<AllCombos, unknown> => {
-  return useQuery<AllCombos, Error, AllCombos, readonly ['lookups', 'all', string]>({
-    queryKey: ['lookups', 'all', docTypeId] as const,
-    queryFn: async () => {
+  return useQuery(
+    ['lookups', 'all', docTypeId] as const,
+    async () => {
       const [
         partners,
         orgUnits,
@@ -245,9 +267,11 @@ export const useAllCombos = (
         costDistributionMethods,
       };
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+    {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    }
+  );
 };
 
 export default {
