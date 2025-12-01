@@ -35,7 +35,7 @@ import {
 } from '@tanstack/react-table';
 import { DocumentLineItemDto, CreateDocumentLineItemDto } from '../../types';
 import { useAutoSaveItems } from '../../hooks/useAutoSaveItems';
-import { useArticles, useTaxRates } from '../../hooks/useCombos';
+import { useArticles } from '../../hooks/useCombos';
 import { api } from '../../api';
 import { EditableCell, CellNavigationDirection } from './EditableCell';
 import { ConflictDialog } from './ConflictDialog';
@@ -88,7 +88,6 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
   const lastKnownItemsRef = useRef<Map<number, DocumentLineItemDto>>(new Map());
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
-  const { isLoading: taxRatesLoading } = useTaxRates();
 
   const { autoSaveMap, debouncedSave, forceUpdateItem, refreshItem, initializeETags } =
     useAutoSaveItems({
@@ -355,7 +354,7 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
     [findFocusableColumn, focusCell, items.length]
   );
 
-  const columns: ColumnDef<DocumentLineItemDto>[] = useMemo(() => {
+  const columns = useMemo((): ColumnDef<DocumentLineItemDto>[] => {
     return [
       columnHelper.display({
         id: 'id',
@@ -530,7 +529,7 @@ export const DocumentItemsTable: React.FC<DocumentItemsTableProps> = ({
   const rows = table.getRowModel().rows;
   const listHeight = Math.min(Math.max(rows.length, 1) * ROW_HEIGHT, 400);
 
-  if (isTableLoading || articlesLoading || taxRatesLoading) {
+  if (isTableLoading || articlesLoading) {
     return (
       <Box display="flex" justifyContent="center" p={3}>
         <CircularProgress />
