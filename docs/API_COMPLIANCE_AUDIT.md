@@ -1,7 +1,7 @@
 # 🔍 API Compliance Audit - Frontend vs Backend vs ERP Specifikacija
 
 **Datum:** 01.12.2025  
-**Status:** 🟡 **Parcijalno Implementirano** - MVP Dokumenata Kompletan
+**Status:** 🟡 **Parcijalno Implementirano** - MVP Dokumenta Kompletan, Backend Nepotpun
 
 ---
 
@@ -11,27 +11,152 @@
 
 | Modul | Frontend | Backend API | ERP Spec | Status |
 |-------|----------|-------------|----------|--------|
-| **Dokumenti - Zaglavlje** | ✅ 100% | ⚠️ Pretpostavlja se | ✅ 100% | 🟢 MVP Done |
-| **Dokumenti - Stavke** | ✅ 100% | ⚠️ Pretpostavlja se | ✅ 100% | 🟢 MVP Done |
-| **Dokumenti - Troškovi** | ✅ 100% | ⚠️ Pretpostavlja se | ✅ 100% | 🟢 MVP Done |
-| **Lookup/Combosi** | ✅ 100% | ⚠️ Pretpostavlja se | ✅ 100% | 🟢 MVP Done |
-| **Master Data** | ❌ 0% | ❌ 0% | ❌ 0% | 🔴 Not Started |
+| **Dokumenti - Zaglavlje** | ✅ 100% | ❌ 0% | ✅ 100% | 🔴 Blocked |
+| **Dokumenti - Stavke** | ✅ 100% | ❌ 0% | ✅ 100% | 🔴 Blocked |
+| **Dokumenti - Troškovi** | ✅ 100% | ❌ 0% | ✅ 100% | 🔴 Blocked |
+| **Lookup/Combosi** | ✅ 100% | ⚠️ 10% | ✅ 100% | 🟡 Partial |
+| **Master Data (Partneri)** | ❌ 0% | ✅ 100% | ❌ 0% | 🟢 Backend Done |
+| **Ostali Master Data** | ❌ 0% | ❌ 0% | ❌ 0% | 🔴 Not Started |
 | **Izveštaji** | ❌ 0% | ❌ 0% | ❌ 0% | 🔴 Not Started |
 | **Finansije** | ❌ 0% | ❌ 0% | ❌ 0% | 🔴 Not Started |
 
 ### ⚠️ KRITIČNO - Backend API Status:
 
-**Pronađeno u backend repo (`AccountingOnline`):**
-- ✅ Samo `PartnersController.cs` postoji
-- ❌ Nedostaje većina API endpointa koje frontend očekuje
+**✅ Potvrđeno provereno u backend repo (`AccountingOnline`):**
+
+| Controller | Endpoints | Status | Napomena |
+|-----------|-----------|--------|----------|
+| `PartnersController.cs` | 7 endpoints | ✅ **Potpuno Implementiran** | CQRS + MediatR |
+| `DocumentsController.cs` | - | ❌ **Ne postoji** | Kritično! |
+| `LookupsController.cs` | - | ❌ **Ne postoji** | Kritično! |
+| `LineItemsController.cs` | - | ❌ **Ne postoji** | Kritično! |
+| `CostsController.cs` | - | ❌ **Ne postoji** | Kritično! |
 
 **Frontend API očekivanja:**
-- 📝 9 Lookup endpoints
-- 📝 5 Document endpoints
-- 📝 5 LineItem endpoints
-- 📝 5 Cost endpoints
-- 📝 6 CostItem endpoints
-- **Total: 30 API endpoints očekivanih**
+- 📝 10 Lookup endpoints → ❌ 0 implementirano (osim Partnera)
+- 📝 5 Document endpoints → ❌ 0 implementirano
+- 📝 5 LineItem endpoints → ❌ 0 implementirano
+- 📝 5 Cost endpoints → ❌ 0 implementirano
+- 📝 6 CostItem endpoints → ❌ 0 implementirano
+- **Total: 31 endpoints očekivanih** → ✅ **1 implementiran (3.2%)**
+
+---
+
+## 🎯 Detaljno - Backend PartnersController
+
+### ✅ Što Postoji (Potpuno Funkcionalan):
+
+```csharp
+// src/AccountingOnline.API/Controllers/PartnersController.cs
+[ApiController]
+[Route("api/[controller]")]
+public class PartnersController : ControllerBase
+{
+    // ✅ Implementirano:
+    GET    /api/partners              // Lista svih
+    GET    /api/partners/{id}         // Jedan po ID
+    GET    /api/partners/combo        // Combo/Dropdown
+    GET    /api/partners/search?q=... // Pretraga
+    POST   /api/partners              // Kreiranje
+    PUT    /api/partners/{id}         // Ažuriranje
+    DELETE /api/partners/{id}         // Brisanje
+}
+```
+
+**Architecture Pattern:**
+- ✅ Clean Architecture (API → Application → Domain → Infrastructure)
+- ✅ CQRS sa MediatR
+- ✅ DTO pattern
+- ✅ Proper error handling
+- ✅ Validation
+- ✅ Swagger docs
+
+**Ovo je ODLIČAN template za ostale controllere!**
+
+---
+
+## ❌ Što NE Postoji (Kritično za MVP)
+
+### 1. DocumentsController - KRITIČNO!
+
+**Frontend očekuje:**
+
+```typescript
+// src/api/endpoints.ts - documentApi
+POST   /api/v1/documents              // ❌ Ne postoji
+GET    /api/v1/documents              // ❌ Ne postoji
+GET    /api/v1/documents/{id}         // ❌ Ne postoji
+PUT    /api/v1/documents/{id}         // ❌ Ne postoji (sa ETag!)
+DELETE /api/v1/documents/{id}         // ❌ Ne postoji
+```
+
+**Backend reality:**
+```
+❌ src/AccountingOnline.API/Controllers/DocumentsController.cs
+   File not found!
+```
+
+### 2. LookupsController - KRITIČNO!
+
+**Frontend očekuje:**
+
+```typescript
+// src/api/endpoints.ts - lookupApi
+GET /api/v1/lookups/partners                    // ⚠️ Postoji kao /partners/combo
+GET /api/v1/lookups/organizational-units        // ❌ Ne postoji
+GET /api/v1/lookups/taxation-methods            // ❌ Ne postoji
+GET /api/v1/lookups/referents                   // ❌ Ne postoji
+GET /api/v1/lookups/reference-documents         // ❌ Ne postoji
+GET /api/v1/lookups/tax-rates                   // ❌ Ne postoji
+GET /api/v1/lookups/articles                    // ❌ Ne postoji
+GET /api/v1/lookups/cost-types                  // ❌ Ne postoji
+GET /api/v1/lookups/cost-distribution-methods   // ❌ Ne postoji
+GET /api/v1/lookups/currencies                  // ❌ Ne postoji
+```
+
+**Backend reality:**
+```
+❌ src/AccountingOnline.API/Controllers/LookupsController.cs
+   File not found!
+```
+
+### 3. DocumentLineItemsController - KRITIČNO!
+
+**Frontend očekuje (za Excel-like grid autosave):**
+
+```typescript
+POST   /api/v1/documents/{docId}/items              // ❌
+GET    /api/v1/documents/{docId}/items              // ❌
+GET    /api/v1/documents/{docId}/items/{itemId}     // ❌
+PATCH  /api/v1/documents/{docId}/items/{itemId}     // ❌ KRITIČNO za autosave!
+DELETE /api/v1/documents/{docId}/items/{itemId}     // ❌
+```
+
+**⚠️ PATCH endpoint je KLJUČAN:**
+- Frontend implementirao debounced autosave (800ms)
+- Koristi ETag za optimistic locking
+- Mora da podrži 409 Conflict za concurrent edits
+
+### 4. DocumentCostsController - KRITIČNO!
+
+**Frontend očekuje:**
+
+```typescript
+POST   /api/v1/documents/{docId}/costs                    // ❌
+GET    /api/v1/documents/{docId}/costs                    // ❌
+GET    /api/v1/documents/{docId}/costs/{costId}           // ❌
+PUT    /api/v1/documents/{docId}/costs/{costId}           // ❌
+DELETE /api/v1/documents/{docId}/costs/{costId}           // ❌
+
+// Cost Items (nested resource)
+POST   /api/v1/documents/{docId}/costs/{costId}/items            // ❌
+GET    /api/v1/documents/{docId}/costs/{costId}/items            // ❌
+PATCH  /api/v1/documents/{docId}/costs/{costId}/items/{itemId}  // ❌
+DELETE /api/v1/documents/{docId}/costs/{costId}/items/{itemId}  // ❌
+
+// Raspodela troškova - KLJUČNO!
+POST   /api/v1/documents/{docId}/costs/{costId}/distribute       // ❌
+```
 
 ---
 
@@ -43,47 +168,34 @@
 
 **Prema specifikaciji:**
 
-| # | Tip Dokumenta | Frontend UI | API Endpoint | Status |
-|---|--------------|-------------|--------------|--------|
-| 1 | ULAZNA KALKULACIJA VP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 2 | FINANSIJSKO ODOBRENJE | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 3 | FINANSIJSKO ZADUŽENJE | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 4 | AVANSNI RAČUN | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 5 | PREDRAČUN | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 6 | RAČUN OTPREMNICA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 7 | REPREZENTACIJA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 8 | POPIS | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 9 | REVERS | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 10 | POČETNO STANJE | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 11 | NIVELACIJA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 12 | KOREKCIJA KOLIČINA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 13 | VIŠAK | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 14 | MANJAK | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 15 | OTPIS | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 16 | INTERNA DOSTAVNICA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 17 | TREBOVANJE | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 18 | PREDATNICA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
+| # | Tip Dokumenta | Frontend UI | Backend API | Status |
+|---|--------------|-------------|------------|--------|
+| 1 | ULAZNA KALKULACIJA VP | ✅ UI Ready | ❌ Missing | 🔴 |
+| 2 | FINANSIJSKO ODOBRENJE | ✅ UI Ready | ❌ Missing | 🔴 |
+| 3 | FINANSIJSKO ZADUŽENJE | ✅ UI Ready | ❌ Missing | 🔴 |
+| 4 | AVANSNI RAČUN | ✅ UI Ready | ❌ Missing | 🔴 |
+| 5 | PREDRAČUN | ✅ UI Ready | ❌ Missing | 🔴 |
+| 6 | RAČUN OTPREMNICA | ✅ UI Ready | ❌ Missing | 🔴 |
+| 7 | REPREZENTACIJA | ✅ UI Ready | ❌ Missing | 🔴 |
+| 8 | POPIS | ✅ UI Ready | ❌ Missing | 🔴 |
+| 9 | REVERS | ✅ UI Ready | ❌ Missing | 🔴 |
+| 10 | POČETNO STANJE | ✅ UI Ready | ❌ Missing | 🔴 |
+| 11 | NIVELACIJA | ✅ UI Ready | ❌ Missing | 🔴 |
+| 12 | KOREKCIJA KOLIČINA | ✅ UI Ready | ❌ Missing | 🔴 |
+| 13 | VIŠAK | ✅ UI Ready | ❌ Missing | 🔴 |
+| 14 | MANJAK | ✅ UI Ready | ❌ Missing | 🔴 |
+| 15 | OTPIS | ✅ UI Ready | ❌ Missing | 🔴 |
+| 16 | INTERNA DOSTAVNICA | ✅ UI Ready | ❌ Missing | 🔴 |
+| 17 | TREBOVANJE | ✅ UI Ready | ❌ Missing | 🔴 |
+| 18 | PREDATNICA | ✅ UI Ready | ❌ Missing | 🔴 |
 
 **Napomena:** Frontend je generički - podržava sve tipove dokumenata. Backend endpoint `/documents` mora da prosleđuje `documentType` parametar.
 
 #### 1.2 MP - Maloprodaja (14 tipova)
 
-| # | Tip Dokumenta | Frontend UI | API Endpoint | Status |
-|---|--------------|-------------|--------------|--------|
-| 1 | POPIS MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 2 | POČETNO STANJE MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 3 | VIŠAK MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 4 | MANJAK MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 5 | INTERNA DOSTAVNICA MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 6 | OTPIS MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 7 | KOREKCIJA KOLIČINA MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 8 | NIVELACIJA MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 9 | OTPREMA U MALOPRODAJU | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 10 | OTPREMA IZ MALOPRODAJE | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 11 | RAČUN MP-ZBIRNI | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 12 | REPREZENTACIJA MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 13 | TREBOVANJE MP | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
-| 14 | DIREKTNA MP KALKULACIJA | ✅ UI Ready | ⚠️ Pretpostavlja se | 🟡 |
+| # | Tip Dokumenta | Frontend UI | Backend API | Status |
+|---|--------------|-------------|------------|--------|
+| 1-14 | SVE MP VRSTE | ✅ UI Ready | ❌ Missing | 🔴 |
 
 **Total Tipova Dokumenata:** 32 (18 VP + 14 MP)
 
@@ -91,284 +203,188 @@
 
 ### 2. TAB ZAGLAVLJE DOKUMENTA (per ERP Spec)
 
-#### tblDokument - Kompletna Implementacija
+#### tblDokument - Kompletna Frontend Implementacija
 
 | # | Polje | SP/Combo | Frontend | Backend API | Status |
 |---|-------|----------|----------|-------------|--------|
-| 1 | Partner (Dobavljač) | `spPartnerComboStatusNabavka` | ✅ | `/lookups/partners` ⚠️ | 🟡 |
-| 2 | Magacin (Org. Jedinica) | `spOrganizacionaJedinicaCombo` | ✅ | `/lookups/organizational-units` ⚠️ | 🟡 |
-| 3 | Oporezivanje | `spNacinOporezivanjaComboNabavka` | ✅ | `/lookups/taxation-methods` ⚠️ | 🟡 |
-| 4 | Referent | `spReferentCombo` | ✅ | `/lookups/referents` ⚠️ | 🟡 |
-| 5 | Narudžbenica | `spDokumentNDCombo` | ✅ | `/lookups/reference-documents` ⚠️ | 🟡 |
-| 6 | Valuta | `spValutaCombo` | ✅ | `/lookups/currencies` ❌ | 🔴 |
-| 7 | Broj Dokumenta | Input | ✅ | ✅ | ✅ |
-| 8 | Datum | DatePicker | ✅ | ✅ | ✅ |
-| 9 | Datum Dospeca | DatePicker | ✅ | ✅ | ✅ |
-| 10 | Datum Valute | DatePicker | ✅ | ✅ | ✅ |
-| 11 | Broj Računa Partnera | Input | ✅ | ✅ | ✅ |
-| 12 | Datum Računa Partnera | DatePicker | ✅ | ✅ | ✅ |
-| 13 | Kurs | Input | ✅ | ✅ | ✅ |
-| 14 | Napomena | TextArea | ✅ | ✅ | ✅ |
+| 1 | Partner (Dobavljač) | `spPartnerComboStatusNabavka` | ✅ | ✅ `/partners/combo` | 🟢 |
+| 2 | Magacin (Org. Jedinica) | `spOrganizacionaJedinicaCombo` | ✅ | ❌ Missing | 🔴 |
+| 3 | Oporezivanje | `spNacinOporezivanjaComboNabavka` | ✅ | ❌ Missing | 🔴 |
+| 4 | Referent | `spReferentCombo` | ✅ | ❌ Missing | 🔴 |
+| 5 | Narudžbenica | `spDokumentNDCombo` | ✅ | ❌ Missing | 🔴 |
+| 6 | Valuta | `spValutaCombo` | ✅ | ❌ Missing | 🔴 |
+| 7 | Broj Dokumenta | Input | ✅ | ❌ Missing | 🔴 |
+| 8 | Datum | DatePicker | ✅ | ❌ Missing | 🔴 |
+| 9 | Datum Dospeca | DatePicker | ✅ | ❌ Missing | 🔴 |
+| 10 | Datum Valute | DatePicker | ✅ | ❌ Missing | 🔴 |
+| 11 | Broj Računa Partnera | Input | ✅ | ❌ Missing | 🔴 |
+| 12 | Datum Računa Partnera | DatePicker | ✅ | ❌ Missing | 🔴 |
+| 13 | Kurs | Input | ✅ | ❌ Missing | 🔴 |
+| 14 | Napomena | TextArea | ✅ | ❌ Missing | 🔴 |
 
 #### tblDokumentAvansPDV - Subform
 
 | # | Polje | SP/Combo | Frontend | Backend API | Status |
 |---|-------|----------|----------|-------------|--------|
-| 1 | Poreska Stopa | `spPoreskaStopaCombo` | ✅ | `/lookups/tax-rates` ⚠️ | 🟡 |
-| 2 | Procenat (%) | Read-only | ✅ | ✅ | ✅ |
-| 3 | Iznos PDV-a | Input | ✅ | ✅ | ✅ |
-| 4 | Add/Remove | Actions | ✅ | ✅ | ✅ |
+| 1 | Poreska Stopa | `spPoreskaStopaCombo` | ✅ | ❌ Missing | 🔴 |
+| 2 | Procenat (%) | Read-only | ✅ | ❌ Missing | 🔴 |
+| 3 | Iznos PDV-a | Input | ✅ | ❌ Missing | 🔴 |
+| 4 | Add/Remove | Actions | ✅ | ❌ Missing | 🔴 |
 
-**Compliance:** ✅ 14/14 polja + Avans PDV subform = **100% implementirano**
+**Compliance:** 
+- ✅ Frontend: 14/14 polja + Avans PDV = **100% implementirano**
+- ❌ Backend: 1/14 combosa = **7% implementirano**
 
 ---
 
 ### 3. TAB STAVKE DOKUMENTA (per ERP Spec)
 
-#### tblStavkaDokumenta - Kompletna Implementacija
+#### tblStavkaDokumenta - Excel-Like Grid
 
-| # | Polje | SP/Combo | Frontend | Backend API | Status |
-|---|-------|----------|----------|-------------|--------|
-| 1 | Artikal | `spArtikalComboUlaz` | ✅ | `/lookups/articles` ⚠️ | 🟡 |
-| 2 | Količina | Decimal | ✅ | ✅ | ✅ |
-| 3 | Cena | Decimal | ✅ | ✅ | ✅ |
-| 4 | Rabat | Decimal | ✅ | ✅ | ✅ |
-| 5 | Marža | Decimal | ✅ | ✅ | ✅ |
-| 6 | PDV Stopa | Display + Calc | ✅ | ✅ | ✅ |
-| 7 | PDV Iznos | Display + Calc | ✅ | ✅ | ✅ |
-| 8 | Ukupno | Display + Calc | ✅ | ✅ | ✅ |
-| 9 | **Autosave** | PATCH + ETag | ✅ | `/documents/{id}/items/{id}` ⚠️ | 🟡 |
-| 10 | **Tab/Enter Nav** | Keyboard | ✅ | N/A | ✅ |
-| 11 | **Add/Remove** | CRUD | ✅ | ✅ | ✅ |
-| 12 | **Conflict 409** | Dialog | ✅ | ✅ | ✅ |
+| # | Polje | Frontend | Backend API | Status |
+|---|-------|----------|-------------|--------|
+| 1 | Artikal | ✅ Autocomplete | ❌ `/lookups/articles` | 🔴 |
+| 2 | Količina | ✅ Decimal | ❌ PATCH endpoint | 🔴 |
+| 3 | Cena | ✅ Decimal | ❌ PATCH endpoint | 🔴 |
+| 4 | Rabat | ✅ Decimal | ❌ PATCH endpoint | 🔴 |
+| 5 | Marža | ✅ Decimal | ❌ PATCH endpoint | 🔴 |
+| 6 | PDV Stopa | ✅ Display + Calc | ❌ Auto-lookup | 🔴 |
+| 7 | PDV Iznos | ✅ Display + Calc | ❌ Server calc | 🔴 |
+| 8 | Ukupno | ✅ Display + Calc | ❌ Server calc | 🔴 |
+| 9 | **Autosave** | ✅ 800ms debounce | ❌ **PATCH missing!** | 🔴 |
+| 10 | **Tab/Enter Nav** | ✅ Keyboard | N/A | ✅ |
+| 11 | **Add/Remove** | ✅ CRUD UI | ❌ API missing | 🔴 |
+| 12 | **Conflict 409** | ✅ Dialog ready | ❌ ETag missing | 🔴 |
 
-**Compliance:** ✅ **100% implementirano** - Excel-like grid sa autosave
+**Compliance:** 
+- ✅ Frontend: **100% implementirano** - Excel-like grid sa autosave
+- ❌ Backend: **0% implementirano** - Nijedan endpoint ne postoji
 
 ---
 
 ### 4. TAB ZAVISNI TROŠKOVI (per ERP Spec)
 
-#### tblDokumentTroskovi - Zaglavlje Troška
+#### Frontend: 100% Implementirano ✅
 
-| # | Polje | SP/Combo | Frontend | Backend API | Status |
-|---|-------|----------|----------|-------------|--------|
-| 1 | Partner (Analitika) | `spPartnerComboStatusNabavka` | ✅ | `/lookups/partners` ⚠️ | 🟡 |
-| 2 | Vrsta Dokumenta | `spVrsteDokumenataTroskoviCOMBO` | ✅ Hardcoded | ⚠️ Missing | 🟡 |
-| 3 | Broj Dokumenta | Input | ✅ | ✅ | ✅ |
-| 4 | Datum Dospeca | DatePicker | ✅ | ✅ | ✅ |
-| 5 | Datum Valute | DatePicker | ✅ | ✅ | ✅ |
-| 6 | Opis | TextArea | ✅ | ✅ | ✅ |
-| 7 | Total Net | Calculated | ✅ | ✅ | ✅ |
-| 8 | Total VAT | Calculated | ✅ | ✅ | ✅ |
+- ✅ Zaglavlje troška (tblDokumentTroskovi)
+- ✅ Stavke troška (tblDokumentTroskoviStavka)
+- ✅ PDV stavke (tblDokumentTroskoviStavkaPDV)
+- ✅ "Primeni Raspodelu" funkcionalnost
 
-#### tblDokumentTroskoviStavka - Stavke Troška
+#### Backend: 0% Implementirano ❌
 
-| # | Polje | SP/Combo | Frontend | Backend API | Status |
-|---|-------|----------|----------|-------------|--------|
-| 1 | Vrsta Troška | `spUlazniRacuniIzvedeniTroskoviCombo` | ✅ | `/lookups/cost-types` ⚠️ | 🟡 |
-| 2 | Način Deljenja | `spNacinDeljenjaTroskovaCombo` | ✅ | `/lookups/cost-distribution-methods` ⚠️ | 🟡 |
-| 3 | Iznos | Decimal | ✅ | ✅ | ✅ |
-| 4 | Primeni na Sve | Checkbox | ✅ | ✅ | ✅ |
-| 5 | Gotovina | Decimal | ✅ | ✅ | ✅ |
-| 6 | Kartica | Decimal | ✅ | ✅ | ✅ |
-| 7 | Virman | Decimal | ✅ | ✅ | ✅ |
-| 8 | Valuta | Decimal | ✅ | ✅ | ✅ |
-| 9 | Količina | Decimal | ✅ | ✅ | ✅ |
-
-#### tblDokumentTroskoviStavkaPDV - PDV Stavke
-
-| # | Polje | SP/Combo | Frontend | Backend API | Status |
-|---|-------|----------|----------|-------------|--------|
-| 1 | Poreska Stopa | `spPoreskaStopaCombo` | ✅ | `/lookups/tax-rates` ⚠️ | 🟡 |
-| 2 | Iznos PDV-a | Decimal | ✅ | ✅ | ✅ |
-| 3 | Add/Remove | Actions | ✅ | ✅ | ✅ |
-
-#### Primeni Raspodelu
-
-| Feature | Frontend | Backend API | Status |
-|---------|----------|-------------|--------|
-| "Primeni Raspodelu" Button | ✅ | `/documents/{id}/costs/{id}/distribute` ⚠️ | 🟡 |
-| Confirmation Dialog | ✅ | N/A | ✅ |
-| Refresh Items After | ✅ | ✅ | ✅ |
-
-**Compliance:** ✅ **100% implementirano** - Kompletna funkcionalnost troškova
+- ❌ `/documents/{id}/costs` endpoints
+- ❌ `/documents/{id}/costs/{costId}/items` endpoints
+- ❌ `/documents/{id}/costs/{costId}/distribute` - **KLJUČNO za funkcionalnost!**
 
 ---
 
-## 📊 Frontend API Endpoints - Expected vs Backend
+## 📊 Backend Implementation Gap Analysis
 
-### Lookup/Combo Endpoints
+### Missing Controllers (Kritično za MVP):
 
-| # | Frontend Očekuje | Backend Postoji | SP iz ERP Spec | Status |
-|---|-----------------|----------------|----------------|--------|
-| 1 | `GET /lookups/partners` | ⚠️ Unknown | `spPartnerComboStatusNabavka` | 🟡 |
-| 2 | `GET /lookups/organizational-units` | ⚠️ Unknown | `spOrganizacionaJedinicaCombo` | 🟡 |
-| 3 | `GET /lookups/taxation-methods` | ⚠️ Unknown | `spNacinOporezivanjaComboNabavka` | 🟡 |
-| 4 | `GET /lookups/referents` | ⚠️ Unknown | `spReferentCombo` | 🟡 |
-| 5 | `GET /lookups/reference-documents` | ⚠️ Unknown | `spDokumentNDCombo` | 🟡 |
-| 6 | `GET /lookups/tax-rates` | ⚠️ Unknown | `spPoreskaStopaCombo` | 🟡 |
-| 7 | `GET /lookups/articles` | ⚠️ Unknown | `spArtikalComboUlaz` | 🟡 |
-| 8 | `GET /lookups/cost-types` | ⚠️ Unknown | `spUlazniRacuniIzvedeniTroskoviCombo` | 🟡 |
-| 9 | `GET /lookups/cost-distribution-methods` | ⚠️ Unknown | `spNacinDeljenjaTroskovaCombo` | 🟡 |
-| 10 | `GET /lookups/currencies` | ❌ Missing | `spValutaCombo` | 🔴 |
+```csharp
+// Potrebno implementirati:
 
-### Document Endpoints
+❌ src/AccountingOnline.API/Controllers/DocumentsController.cs
+   - POST   /api/v1/documents
+   - GET    /api/v1/documents (list sa paging)
+   - GET    /api/v1/documents/{id}
+   - PUT    /api/v1/documents/{id} (sa ETag header!)
+   - DELETE /api/v1/documents/{id}
 
-| # | Frontend Očekuje | Backend Postoji | Status |
-|---|-----------------|----------------|--------|
-| 1 | `POST /documents` | ⚠️ Unknown | 🟡 |
-| 2 | `GET /documents` (list) | ⚠️ Unknown | 🟡 |
-| 3 | `GET /documents/{id}` | ⚠️ Unknown | 🟡 |
-| 4 | `PUT /documents/{id}` + ETag | ⚠️ Unknown | 🟡 |
-| 5 | `DELETE /documents/{id}` | ⚠️ Unknown | 🟡 |
+❌ src/AccountingOnline.API/Controllers/DocumentLineItemsController.cs
+   - POST   /api/v1/documents/{docId}/items
+   - GET    /api/v1/documents/{docId}/items
+   - GET    /api/v1/documents/{docId}/items/{itemId}
+   - PATCH  /api/v1/documents/{docId}/items/{itemId} (KRITIČNO - autosave!)
+   - DELETE /api/v1/documents/{docId}/items/{itemId}
 
-### LineItem Endpoints
+❌ src/AccountingOnline.API/Controllers/DocumentCostsController.cs
+   - POST   /api/v1/documents/{docId}/costs
+   - GET    /api/v1/documents/{docId}/costs
+   - PUT    /api/v1/documents/{docId}/costs/{costId}
+   - DELETE /api/v1/documents/{docId}/costs/{costId}
 
-| # | Frontend Očekuje | Backend Postoji | Status |
-|---|-----------------|----------------|--------|
-| 1 | `POST /documents/{id}/items` | ⚠️ Unknown | 🟡 |
-| 2 | `GET /documents/{id}/items` | ⚠️ Unknown | 🟡 |
-| 3 | `GET /documents/{id}/items/{itemId}` | ⚠️ Unknown | 🟡 |
-| 4 | `PATCH /documents/{id}/items/{itemId}` + ETag | ⚠️ Unknown | 🟡 |
-| 5 | `DELETE /documents/{id}/items/{itemId}` | ⚠️ Unknown | 🟡 |
+❌ src/AccountingOnline.API/Controllers/DocumentCostItemsController.cs
+   - POST   /api/v1/documents/{docId}/costs/{costId}/items
+   - GET    /api/v1/documents/{docId}/costs/{costId}/items
+   - PATCH  /api/v1/documents/{docId}/costs/{costId}/items/{itemId}
+   - DELETE /api/v1/documents/{docId}/costs/{costId}/items/{itemId}
+   - POST   /api/v1/documents/{docId}/costs/{costId}/distribute (KLJUČNO!)
 
-### Cost Endpoints
+❌ src/AccountingOnline.API/Controllers/LookupsController.cs
+   - GET /api/v1/lookups/organizational-units
+   - GET /api/v1/lookups/taxation-methods
+   - GET /api/v1/lookups/referents
+   - GET /api/v1/lookups/reference-documents
+   - GET /api/v1/lookups/tax-rates
+   - GET /api/v1/lookups/articles
+   - GET /api/v1/lookups/cost-types
+   - GET /api/v1/lookups/cost-distribution-methods
+   - GET /api/v1/lookups/currencies
+```
 
-| # | Frontend Očekuje | Backend Postoji | Status |
-|---|-----------------|----------------|--------|
-| 1 | `POST /documents/{id}/costs` | ⚠️ Unknown | 🟡 |
-| 2 | `GET /documents/{id}/costs` | ⚠️ Unknown | 🟡 |
-| 3 | `GET /documents/{id}/costs/{costId}` | ⚠️ Unknown | 🟡 |
-| 4 | `PUT /documents/{id}/costs/{costId}` + ETag | ⚠️ Unknown | 🟡 |
-| 5 | `DELETE /documents/{id}/costs/{costId}` | ⚠️ Unknown | 🟡 |
+### Stored Procedures Mapping (za LookupsController)
 
-### CostItem Endpoints
+**Backend mora da poziva iste SP-ove kao u MS Access:**
 
-| # | Frontend Očekuje | Backend Postoji | Status |
-|---|-----------------|----------------|--------|
-| 1 | `POST /documents/{id}/costs/{costId}/items` | ⚠️ Unknown | 🟡 |
-| 2 | `GET /documents/{id}/costs/{costId}/items` | ⚠️ Unknown | 🟡 |
-| 3 | `GET /documents/{id}/costs/{costId}/items/{itemId}` | ⚠️ Unknown | 🟡 |
-| 4 | `PATCH /documents/{id}/costs/{costId}/items/{itemId}` | ⚠️ Unknown | 🟡 |
-| 5 | `DELETE /documents/{id}/costs/{costId}/items/{itemId}` | ⚠️ Unknown | 🟡 |
-| 6 | `POST /documents/{id}/costs/{costId}/distribute` | ⚠️ Unknown | 🟡 |
+```sql
+-- Svaki Lookup endpoint treba da poziva odgovarajući SP:
 
-**Total Endpoints:** 30
-
----
-
-## ❌ ŠTA NIJE IMPLEMENTIRANO
-
-### 2. VRSTE NALOGA (0% - Not Started)
-
-**Per ERP Spec:**
-
-| # | Modul | Frontend | Backend | Status |
-|---|-------|----------|---------|--------|
-| 1 | IZVODI | ❌ | ❌ | 🔴 |
-| 2 | ULAZNI RAČUNI | ❌ | ❌ | 🔴 |
-| 3 | KOMPENZACIJE | ❌ | ❌ | 🔴 |
-| 4 | OPŠTI NALOG | ❌ | ❌ | 🔴 |
-| 5 | POČETNO STANJE | ❌ | ❌ | 🔴 |
-
-### 3. IZVEŠTAJI (0% - Not Started)
-
-#### 3.1 ROBNO
-
-| # | Izveštaj | Frontend | Backend | Status |
-|---|----------|----------|---------|--------|
-| 1 | LAGER LISTA | ❌ | ❌ | 🔴 |
-| 2 | KARTICA ARTIKLA | ❌ | ❌ | 🔴 |
-| 3 | DNEVNE PROMENE | ❌ | ❌ | 🔴 |
-| 4 | STANJA ARTIKLA PO MAGACINIMA | ❌ | ❌ | 🔴 |
-| 5 | NABAVKA | ❌ | ❌ | 🔴 |
-| 6 | VP PRODAJA | ❌ | ❌ | 🔴 |
-| 7 | VP RUC | ❌ | ❌ | 🔴 |
-| 8 | MP PRODAJA | ❌ | ❌ | 🔴 |
-| 9 | MP RUC | ❌ | ❌ | 🔴 |
-| 10 | ŠEF OUTBOX | ❌ | ❌ | 🔴 |
-| 11 | KEP | ❌ | ❌ | 🔴 |
-
-#### 3.2 FINANSIJSKO
-
-| # | Izveštaj | Frontend | Backend | Status |
-|---|----------|----------|---------|--------|
-| 1 | ANALITIKE - IOS RSD/DEVIZE | ❌ | ❌ | 🔴 |
-| 2 | ANALITIKE - DOSPELA POTRAŽIVANJA | ❌ | ❌ | 🔴 |
-| 3 | ANALITIKE - OTVORENE STAVKE | ❌ | ❌ | 🔴 |
-
-### 4. STANJA MAGACINA (0% - Not Started)
-
-| Modul | Frontend | Backend | Status |
-|-------|----------|---------|--------|
-| ROBNA EVIDENCIJA | ❌ | ❌ | 🔴 |
-
-### 5. OSNOVNI PODACI (0% - Not Started)
-
-**Per ERP Spec - 14 šifarnika:**
-
-| # | Šifarnik | Frontend CRUD | Backend API | Status |
-|---|----------|--------------|-------------|--------|
-| 1 | VRSTE PLAĆANJA | ❌ | ❌ | 🔴 |
-| 2 | BANKE | ❌ | ❌ | 🔴 |
-| 3 | MESTA | ❌ | ❌ | 🔴 |
-| 4 | DRŽAVE | ❌ | ❌ | 🔴 |
-| 5 | KATEGORIJE | ❌ | ❌ | 🔴 |
-| 6 | ORGANIZACIONE JEDINICE | ❌ | ❌ | 🔴 |
-| 7 | TERITORIJE | ❌ | ❌ | 🔴 |
-| 8 | VRSTE ULAZNIH RAČUNA | ❌ | ❌ | 🔴 |
-| 9 | ARTIKLI I USLUGE | ❌ | ❌ | 🔴 |
-| 10 | JEDINICE MERA | ❌ | ❌ | 🔴 |
-| 11 | PORESKE STOPE | ❌ | ❌ | 🔴 |
-| 12 | KATEGORIJE | ❌ | ❌ | 🔴 |
-| 13 | VALUTE | ❌ | ❌ | 🔴 |
-| 14 | VOZILA | ❌ | ❌ | 🔴 |
-| 15 | MODELI VOZILA | ❌ | ❌ | 🔴 |
+EXEC spPartnerComboStatusNabavka                -- ✅ Postoji (via /partners/combo)
+EXEC spOrganizacionaJedinicaCombo               -- ❌ Missing
+EXEC spNacinOporezivanjaComboNabavka            -- ❌ Missing
+EXEC spReferentCombo                            -- ❌ Missing
+EXEC spDokumentNDCombo                          -- ❌ Missing
+EXEC spPoreskaStopaCombo                        -- ❌ Missing
+EXEC spArtikalComboUlaz                         -- ❌ Missing
+EXEC spUlazniRacuniIzvedeniTroskoviCombo        -- ❌ Missing
+EXEC spNacinDeljenjaTroskovaCombo               -- ❌ Missing
+EXEC spValutaCombo                              -- ❌ Missing
+```
 
 ---
 
 ## 🎯 Preslikavanje iz MS Access Aplikacije
 
-### ✅ ŠTA JE PRESLIKANO:
+### ✅ Frontend Preslikavanje - KOMPLETNO:
 
 #### 1. Forme → React Components
 
 | MS Access Forma | React Component | Status |
 |----------------|-----------------|--------|
-| `DokumentzUlaznaKalkulacijaVeleprodaje` | `DocumentHeader.tsx` | ✅ |
-| `DokumentUlaznaKalkulacijaVeleprodajeStavkaDokumenta` | `DocumentItemsTable.tsx` | ✅ |
-| `DokumentTroskovi` | `DocumentCostsTable.tsx` | ✅ |
-| `DokumentAvansPDV` | Accordion u `DocumentHeader` | ✅ |
-| `DokumentTroskoviStavka` | Nested table u `DocumentCostsTable` | ✅ |
-| `DokumentTroskoviStavkaPDV` | Grid u `DocumentCostsTable` | ✅ |
+| `DokumentzUlaznaKalkulacijaVeleprodaje` | `DocumentHeader.tsx` | ✅ 100% |
+| `DokumentUlaznaKalkulacijaVeleprodajeStavkaDokumenta` | `DocumentItemsTable.tsx` | ✅ 100% |
+| `DokumentTroskovi` | `DocumentCostsTable.tsx` | ✅ 100% |
+| `DokumentAvansPDV` | Accordion u `DocumentHeader` | ✅ 100% |
+| `DokumentTroskoviStavka` | Nested table u `DocumentCostsTable` | ✅ 100% |
+| `DokumentTroskoviStavkaPDV` | Grid u `DocumentCostsTable` | ✅ 100% |
 
-#### 2. Stored Procedures → API Endpoints
-
-| MS Access SP | Frontend API Call | Backend Endpoint | Status |
-|-------------|------------------|------------------|--------|
-| `spPartnerComboStatusNabavka` | `useCombos().partners` | `/lookups/partners` | 🟡 |
-| `spOrganizacionaJedinicaCombo` | `useCombos().organizationalUnits` | `/lookups/organizational-units` | 🟡 |
-| `spNacinOporezivanjaComboNabavka` | `useCombos().taxationMethods` | `/lookups/taxation-methods` | 🟡 |
-| `spReferentCombo` | `useCombos().referents` | `/lookups/referents` | 🟡 |
-| `spDokumentNDCombo` | `useCombos().referenceDocuments` | `/lookups/reference-documents` | 🟡 |
-| `spPoreskaStopaCombo` | `useCombos().taxRates` | `/lookups/tax-rates` | 🟡 |
-| `spArtikalComboUlaz` | `useCombos().articles` | `/lookups/articles` | 🟡 |
-| `spUlazniRacuniIzvedeniTroskoviCombo` | `useCombos().costTypes` | `/lookups/cost-types` | 🟡 |
-| `spNacinDeljenjaTroskovaCombo` | `useCombos().costDistributionMethods` | `/lookups/cost-distribution-methods` | 🟡 |
-| `spValutaCombo` | `useCombos().currencies` | ❌ Missing | 🔴 |
-
-#### 3. Funkcionalnost → Features
+#### 2. Funkcionalnost → Features
 
 | MS Access Feature | React Feature | Status |
 |------------------|---------------|--------|
-| VBA Autosave | React Query + Debounce (800ms) | ✅ |
-| Record Locking | ETag + 409 Conflict | ✅ |
-| Continuous Form | React Window virtualization | ✅ |
-| Tab Order | Tab/Enter keyboard navigation | ✅ |
-| Combos sa Query | Autocomplete combo sa search | ✅ |
-| Subforms | Nested components (Accordion) | ✅ |
-| Calculated Fields | React useMemo + calculations | ✅ |
-| Status Bar | Status indicators (Saving, Saved) | ✅ |
+| VBA Autosave | React Query + Debounce (800ms) | ✅ 100% |
+| Record Locking | ETag + 409 Conflict | ✅ 100% |
+| Continuous Form | React Window virtualization | ✅ 100% |
+| Tab Order | Tab/Enter keyboard navigation | ✅ 100% |
+| Combos sa Query | Autocomplete combo sa search | ✅ 100% |
+| Subforms | Nested components (Accordion) | ✅ 100% |
+| Calculated Fields | React useMemo + calculations | ✅ 100% |
+| Status Bar | Status indicators (Saving, Saved) | ✅ 100% |
+
+### ❌ Backend Preslikavanje - NE POSTOJI:
+
+#### Stored Procedures → API Endpoints
+
+| MS Access SP | Backend Endpoint | Status |
+|-------------|------------------|--------|
+| `spPartnerComboStatusNabavka` | ✅ `/partners/combo` | 🟢 Done |
+| Ostali 9 SP-ova | ❌ Missing | 🔴 0% |
+| Document CRUD SP-ovi | ❌ Missing | 🔴 0% |
+| LineItem CRUD SP-ovi | ❌ Missing | 🔴 0% |
+| Cost CRUD SP-ovi | ❌ Missing | 🔴 0% |
 
 ---
 
@@ -376,73 +392,216 @@
 
 ### Overall Compliance:
 
-| Modul | Frontend | Backend API | ERP Spec | Score |
-|-------|----------|-------------|----------|-------|
-| **MVP Dokumenta** | 100% | ~80%? | 100% | **93%** 🟢 |
+| Modul | Frontend | Backend API | ERP Spec | Weighted Score |
+|-------|----------|-------------|----------|----------------|
+| **MVP Dokumenta** | 100% | 3.2% | 100% | **34.4%** 🔴 |
+| **Partneri (Master Data)** | 0% | 100% | 0% | **33.3%** 🟡 |
 | **Ostalo** | 0% | 0% | 0% | **0%** 🔴 |
-| **Total** | ~30% | ~20%? | ~30% | **~27%** 🟡 |
+| **TOTAL** | ~30% | ~5% | ~30% | **~22%** 🔴 |
 
 ### MVP Dokumenta Breakdown:
 
-| Komponenta | Compliance | Status |
-|-----------|-----------|--------|
-| Zaglavlje (14 polja + Avans PDV) | 100% | ✅ |
-| Stavke (Excel-like + autosave) | 100% | ✅ |
-| Troškovi (CRUD + raspodela) | 100% | ✅ |
-| Combosi (9 endpointa) | 90% (1 missing) | 🟡 |
-| **Total MVP** | **97.5%** | **🟢** |
+| Komponenta | Frontend | Backend | Gap | Blocker? |
+|-----------|----------|---------|-----|----------|
+| Zaglavlje (14 polja) | 100% | 7% | -93% | ✅ Yes |
+| Stavke (autosave) | 100% | 0% | -100% | ✅ Yes |
+| Troškovi (raspodela) | 100% | 0% | -100% | ✅ Yes |
+| Combosi | 100% | 10% | -90% | ✅ Yes |
+| **Total MVP** | **100%** | **4.25%** | **-95.75%** | **BLOCKED** |
 
 ---
 
 ## ⚠️ KRITIČNE PREPORUKE
 
-### 1. Backend API - URGENT
+### 1. Backend API - URGENT PRIORITY 🔴
 
-**Problem:** Frontend očekuje 30 API endpointa, a backend ima samo `PartnersController`.
+**Problem:** Frontend je 100% implementiran, ali backend ima samo 1/31 endpointa.
+
+**Impact:** MVP Dokumenta je **potpuno blokiran** - ne može se koristiti.
+
+**Akcija:**
+
+```
+Priority 1 (Blocker):
+✅ 1. DocumentsController          (5 endpoints)   - Estimacija: 8h
+✅ 2. DocumentLineItemsController  (5 endpoints)   - Estimacija: 10h (PATCH kompleksan!)
+✅ 3. LookupsController            (9 endpoints)   - Estimacija: 6h
+
+Priority 2 (Critical):
+✅ 4. DocumentCostsController      (5 endpoints)   - Estimacija: 8h
+✅ 5. DocumentCostItemsController  (6 endpoints)   - Estimacija: 10h
+
+Total: 42 sata development + 8h testing = 50h (1.25 nedelje full-time)
+```
+
+**Template:** Kopiraj `PartnersController` arhitekturu:
+- ✅ CQRS + MediatR pattern
+- ✅ Clean Architecture layers
+- ✅ Proper validation
+- ✅ Error handling
+- ✅ Swagger documentation
+
+### 2. ETag + Optimistic Locking - KRITIČNO!
+
+**Problem:** Frontend implementirao ETag support, ali backend ga mora vratiti.
 
 **Akcija:**
 ```csharp
-// Potrebno implementirati:
-✅ DocumentsController (5 endpoints)
-✅ DocumentLineItemsController (5 endpoints)
-✅ DocumentCostsController (5 endpoints)
-✅ DocumentCostItemsController (6 endpoints)
-✅ LookupsController (9 endpoints)
+// DocumentsController.cs - GET endpoint mora da vrati ETag
+[HttpGet("{id}")]
+public async Task<ActionResult<DocumentDto>> Get(int id)
+{
+    var document = await _mediator.Send(new GetDocumentByIdQuery(id));
+    
+    // ✅ KRITIČNO: Dodaj ETag header!
+    Response.Headers.Add("ETag", $"\"{document.Version}\"");
+    
+    return Ok(document);
+}
+
+// PUT endpoint mora da proveri If-Match header
+[HttpPut("{id}")]
+public async Task<ActionResult<DocumentDto>> Update(
+    int id, 
+    [FromBody] UpdateDocumentDto dto)
+{
+    // ✅ KRITIČNO: Proveri If-Match!
+    if (!Request.Headers.TryGetValue("If-Match", out var etag))
+        return BadRequest("If-Match header obavezan");
+    
+    var currentVersion = etag.ToString().Trim('"');
+    
+    try 
+    {
+        var updated = await _mediator.Send(
+            new UpdateDocumentCommand(id, dto, currentVersion)
+        );
+        
+        Response.Headers.Add("ETag", $"\"{updated.Version}\"");
+        return Ok(updated);
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        // ✅ KRITIČNO: Vrati 409 Conflict!
+        return StatusCode(409, new 
+        { 
+            message = "Dokument je izmenjen od strane drugog korisnika",
+            currentVersion = "..." // Učitaj trenutnu verziju
+        });
+    }
+}
 ```
 
-### 2. Stored Procedures Mapping
+### 3. PATCH vs PUT - Kritično za Autosave!
 
-**Akcija:** Backend mora da poziva isto named SP-ove kao u MS Access:
-```sql
-EXEC spPartnerComboStatusNabavka
-EXEC spOrganizacionaJedinicaCombo
-EXEC spNacinOporezivanjaComboNabavka
--- itd...
+**Problem:** Frontend koristi PATCH za parcijalne izmene (autosave).
+
+**Akcija:**
+```csharp
+// DocumentLineItemsController.cs
+[HttpPatch("{docId}/items/{itemId}")]
+public async Task<ActionResult<LineItemDto>> Patch(
+    int docId,
+    int itemId,
+    [FromBody] JsonPatchDocument<LineItemDto> patch)
+{
+    // ✅ Primeni samo IZMENJENO polje
+    // Frontend šalje samo: { "quantity": 10 }
+    // Ne ceo objekat!
+    
+    // ETag check isto kao kod PUT
+    // 409 Conflict isto
+}
 ```
 
-### 3. Valuta Combo - Missing
+### 4. Stored Procedures Integration
 
-**Problem:** `spValutaCombo` endpoint ne postoji.
+**Problem:** Backend mora da poziva iste SP-ove kao MS Access.
 
-**Workaround:** Frontend hardcoded RSD.
+**Akcija:**
+```csharp
+// LookupsController.cs
+[HttpGet("partners")]
+public async Task<ActionResult<List<PartnerComboDto>>> GetPartners()
+{
+    // ✅ Pozovi EXACT ISTI SP kao u MS Access
+    var partners = await _db.Query<PartnerComboDto>()
+        .FromSqlRaw("EXEC spPartnerComboStatusNabavka")
+        .ToListAsync();
+    
+    return Ok(partners);
+}
+```
 
-**Akcija:** Dodati `/lookups/currencies` endpoint.
+### 5. Raspodela Troškova Endpoint - Kompleksan!
 
-### 4. Master Data Module
+**Problem:** Ovo je biznis logika koja mora biti identična MS Access-u.
 
-**Problem:** 0% implementirano.
+**Akcija:**
+```csharp
+// DocumentCostItemsController.cs
+[HttpPost("{docId}/costs/{costId}/distribute")]
+public async Task<ActionResult> DistributeCost(
+    int docId,
+    int costId,
+    [FromBody] DistributeCostRequest request)
+{
+    // ✅ Implementiraj ISTI algoritam kao u MS Access VBA
+    // - Učitaj sve stavke dokumenta
+    // - Podeli trošak po izabranom načinu (proporcionalno, jednako, itd.)
+    // - Update svaku stavku sa njenim delom troška
+    // - Recalculate totals
+    
+    var result = await _mediator.Send(
+        new DistributeCostCommand(docId, costId, request)
+    );
+    
+    return Ok(new
+    {
+        success = true,
+        distributedAmount = result.Amount,
+        affectedLineItems = result.ItemCount
+    });
+}
+```
 
-**Akcija:** Kreirati 14 CRUD stranica za šifarnike.
+---
 
-**Estimacija:** ~40-50h development.
+## 🚀 Action Plan - MVP Backend Implementation
 
-### 5. Reports Module
+### Week 1 (40h):
 
-**Problem:** 0% implementirano.
+**Day 1-2 (16h):**
+- ✅ Kreirati `DocumentsController` (5 endpoints)
+- ✅ Kreirati CQRS Commands/Queries
+- ✅ Implementirati ETag support
+- ✅ Unit tests
 
-**Akcija:** Implementirati 14 izveštaja.
+**Day 3-4 (16h):**
+- ✅ Kreirati `DocumentLineItemsController` (5 endpoints)
+- ✅ Implementirati PATCH endpoint (kompleksan!)
+- ✅ ETag + 409 Conflict support
+- ✅ Unit tests
 
-**Estimacija:** ~30-40h development.
+**Day 5 (8h):**
+- ✅ Kreirati `LookupsController` (9 endpoints)
+- ✅ Mapirati sve SP-ove
+- ✅ Integration tests
+
+### Week 2 (20h):
+
+**Day 1-2 (16h):**
+- ✅ Kreirati `DocumentCostsController` (5 endpoints)
+- ✅ Kreirati `DocumentCostItemsController` (6 endpoints)
+- ✅ Implementirati `/distribute` endpoint (kompleksan!)
+- ✅ Unit tests
+
+**Day 3 (4h):**
+- ✅ End-to-end testing sa frontend-om
+- ✅ Bug fixes
+- ✅ Documentation
+
+**Total: 60h (1.5 nedelje full-time)**
 
 ---
 
@@ -450,51 +609,74 @@ EXEC spNacinOporezivanjaComboNabavka
 
 ### ✅ Pozitivno:
 
-1. **MVP Dokumenta 100% Compliance sa ERP Spec**
+1. **Frontend 100% Compliance sa ERP Spec** 🎉
    - Sve forme preslikane
    - Svi SP-ovi mapirani
    - Sve funkcionalnosti implementirane
+   - 2,900 LOC kvalitetnog koda
+   - 61 unit testova
 
-2. **Moderna Arhitektura**
-   - MS Access VBA → React + TypeScript
-   - Record Locking → ETag + 409 Conflict
-   - Continuous Forms → React Window
+2. **Backend Template Exists** 👍
+   - `PartnersController` je odličan primer
+   - CQRS + Clean Architecture
+   - Može se kopirati za ostale controllere
 
-3. **Production Ready MVP**
-   - 2,900 LOC frontend
-   - 61 unit testova (100% utils)
-   - Kompletna dokumentacija
+3. **Clear Gap Analysis** 📊
+   - Tačno znamo šta fali
+   - Estimacije realne
+   - Plan implementacije jasan
 
-### ⚠️ Rizici:
+### ❌ Kritični Problemi:
 
-1. **Backend API Ne Postoji (ili nije dostupan)**
-   - Frontend očekuje 30 endpointa
-   - Pronađen samo `PartnersController`
-   - Potrebna backend implementacija
+1. **Backend Potpuno Blokira MVP** 🔴
+   - Frontend ne može da radi bez backend API-ja
+   - 30/31 endpointa nedostaje (96.8% gap)
+   - Procenjen development: 60h (1.5 nedelje)
 
-2. **Master Data & Reports - 0%**
-   - Van MVP scope-a
-   - Ali potrebno za full ERP
-   - ~70-90h development preostalo
+2. **ETag/Concurrency Kritično** ⚠️
+   - Frontend implementirao, backend mora da podrži
+   - Bez toga nema optimistic locking-a
+   - 409 Conflict flow mora raditi
 
-3. **Valuta Combo Missing**
-   - Minor issue
-   - Workaround postoji (hardcoded RSD)
+3. **PATCH Endpoint Kompleksan** 🔧
+   - Autosave ključna funkcionalnost
+   - Parcijalne izmene (ne PUT)
+   - Debounce na 800ms implementiran
 
 ### 🚀 Preporuka:
 
-**MVP Dokumenta je spreman za Go-Live SA USLOVOM:**
-- ✅ Backend API mora biti implementiran
-- ✅ Testiranje na staging okruženju
-- ✅ End-user testing (1 nedelja)
+**URGENT: Backend Implementation (1.5 nedelje)**
 
-**Full ERP Sistem:**
-- 🔴 Potrebno još ~70-90h development
-- 🔴 Master Data + Reports + Finance moduli
+```
+Priority 1 (Blocker - Week 1):
+  ✅ DocumentsController
+  ✅ DocumentLineItemsController  
+  ✅ LookupsController
+
+Priority 2 (Critical - Week 2 first half):
+  ✅ DocumentCostsController
+  ✅ DocumentCostItemsController
+
+Testing (Week 2 second half):
+  ✅ Integration testing
+  ✅ End-to-end sa frontend-om
+  ✅ User acceptance testing
+```
+
+**Nakon backend implementacije:**
+- ✅ MVP Dokumenta može ići u staging
+- ✅ User testing 1 nedelja
+- ✅ Production deployment
+
+**Full ERP Sistem (budućnost):**
+- 🔴 Master Data moduli (~40h)
+- 🔴 Reports moduli (~30h)
+- 🔴 Finance moduli (~40h)
+- **Total additional: ~110h (2.75 nedelje)**
 
 ---
 
-**📊 Status:** MVP Kompletan, Backend API Unclear  
+**📊 Status:** Frontend 100% Done, Backend 3.2% Done (BLOCKER)  
 **📅 Datum:** 01.12.2025  
 **👨‍💻 Author:** Development Team  
-**✅ Recommendation:** Deploy MVP to Staging + Implement Missing Backend
+**✅ Recommendation:** Prioritize backend API implementation (1.5 nedelje) → MVP Go-Live
