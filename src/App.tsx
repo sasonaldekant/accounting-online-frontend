@@ -40,8 +40,8 @@ const App: React.FC = () => {
       <ThemeProvider theme={muiTheme}>
         <CssBaseline />
         <BrowserRouter>
-          <Layout>
-            <Routes>
+          <Routes>
+            <Route element={<Layout />}>
               {/* Dashboard */}
               <Route path="/" element={<DashboardPage />} />
               
@@ -88,8 +88,8 @@ const App: React.FC = () => {
               
               {/* 404 - Redirect to Dashboard */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
+            </Route>
+          </Routes>
         </BrowserRouter>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
