@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ThemeProvider, createTheme, CssBaseline, Box, Typography } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { Layout } from './components/Layout/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { DocumentListPage } from './pages/DocumentListPage';
@@ -19,29 +19,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Placeholder component for coming soon pages
-const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
-  <Box 
-    display="flex" 
-    flexDirection="column" 
-    alignItems="center" 
-    justifyContent="center" 
-    minHeight="60vh"
-    textAlign="center"
-    p={4}
-  >
-    <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
-      {title}
-    </Typography>
-    <Typography variant="h6" color="text.secondary" mt={2}>
-      Ova stranica je u razvoju...
-    </Typography>
-    <Typography variant="body1" color="text.secondary" mt={1}>
-      Uskoro će biti dostupna!
-    </Typography>
-  </Box>
-);
 
 const App: React.FC = () => {
   const theme = useUIStore((state) => state.theme);
@@ -73,7 +50,7 @@ const App: React.FC = () => {
               <Route path="/documents/new" element={<DocumentCreatePage />} />
               <Route path="/documents/:id" element={<DocumentDetailPage />} />
               
-              {/* Document Types - VP (Veleprodaja) - FIXED: Direct to form */}
+              {/* Document Types - VP (Veleprodaja) */}
               <Route path="/documents/vp/ur" element={<DocumentCreatePage docType="UR" />} />
               <Route path="/documents/vp/fo" element={<DocumentCreatePage docType="FO" />} />
               <Route path="/documents/vp/fz" element={<DocumentCreatePage docType="FZ" />} />
@@ -93,7 +70,7 @@ const App: React.FC = () => {
               <Route path="/documents/vp/tr" element={<DocumentCreatePage docType="TR" />} />
               <Route path="/documents/vp/pd" element={<DocumentCreatePage docType="PD" />} />
               
-              {/* Document Types - MP (Maloprodaja) - FIXED: Direct to form */}
+              {/* Document Types - MP (Maloprodaja) */}
               <Route path="/documents/mp/pm" element={<DocumentCreatePage docType="PM" />} />
               <Route path="/documents/mp/psm" element={<DocumentCreatePage docType="PSM" />} />
               <Route path="/documents/mp/vsm" element={<DocumentCreatePage docType="VSM" />} />
@@ -109,32 +86,7 @@ const App: React.FC = () => {
               <Route path="/documents/mp/trm" element={<DocumentCreatePage docType="TRM" />} />
               <Route path="/documents/mp/dmk" element={<DocumentCreatePage docType="DMK" />} />
               
-              {/* Inventory */}
-              <Route path="/inventory/stock" element={<ComingSoonPage title="Robna Evidencija" />} />
-              
-              {/* Master Data */}
-              <Route path="/master-data/payment-types" element={<ComingSoonPage title="Vrste Plaćanja" />} />
-              <Route path="/master-data/banks" element={<ComingSoonPage title="Banke" />} />
-              <Route path="/master-data/places" element={<ComingSoonPage title="Mesta" />} />
-              <Route path="/master-data/countries" element={<ComingSoonPage title="Države" />} />
-              <Route path="/master-data/categories" element={<ComingSoonPage title="Kategorije" />} />
-              <Route path="/master-data/org-units" element={<ComingSoonPage title="Organizacione Jedinice" />} />
-              <Route path="/master-data/territories" element={<ComingSoonPage title="Teritorije" />} />
-              <Route path="/master-data/invoice-types" element={<ComingSoonPage title="Vrste Ulaznih Računa" />} />
-              <Route path="/master-data/articles" element={<ComingSoonPage title="Artikli i Usluge" />} />
-              <Route path="/master-data/units" element={<ComingSoonPage title="Jedinice Mera" />} />
-              <Route path="/master-data/tax-rates" element={<ComingSoonPage title="Poreske Stope" />} />
-              <Route path="/master-data/currencies" element={<ComingSoonPage title="Valute" />} />
-              <Route path="/master-data/vehicles" element={<ComingSoonPage title="Vozila" />} />
-              <Route path="/master-data/vehicle-models" element={<ComingSoonPage title="Modeli Vozila" />} />
-              
-              {/* Finance */}
-              <Route path="/finance" element={<ComingSoonPage title="Finansije" />} />
-              
-              {/* Reports */}
-              <Route path="/reports" element={<ComingSoonPage title="Izveštaji" />} />
-              
-              {/* 404 */}
+              {/* 404 - Redirect to Dashboard */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
