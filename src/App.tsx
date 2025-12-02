@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { ThemeProvider, createTheme, CssBaseline, Box, Typography } from '@mui/material';
 import { Layout } from './components/Layout/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { DocumentListPage } from './pages/DocumentListPage';
@@ -18,6 +19,29 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Placeholder component for coming soon pages
+const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
+  <Box 
+    display="flex" 
+    flexDirection="column" 
+    alignItems="center" 
+    justifyContent="center" 
+    minHeight="60vh"
+    textAlign="center"
+    p={4}
+  >
+    <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
+      {title}
+    </Typography>
+    <Typography variant="h6" color="text.secondary" mt={2}>
+      Ova stranica je u razvoju...
+    </Typography>
+    <Typography variant="body1" color="text.secondary" mt={1}>
+      Uskoro će biti dostupna!
+    </Typography>
+  </Box>
+);
 
 const App: React.FC = () => {
   const theme = useUIStore((state) => state.theme);
@@ -112,10 +136,11 @@ const App: React.FC = () => {
               
               {/* 404 */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
+            </Routes>
+          </Layout>
         </BrowserRouter>
       </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 };
