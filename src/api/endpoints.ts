@@ -36,9 +36,21 @@ export const lookupApi = {
   /**
    * GET /api/v1/lookups/partners
    * Stored Procedure: spPartnerComboStatusNabavka
+   * ⚠️ DEPRECATED: Use searchPartners() instead for better performance (6000+ records)
    */
   getPartners: async (): Promise<PartnerComboDto[]> => {
     const response = await apiClient.get<PartnerComboDto[]>('/lookups/partners');
+    return response.data;
+  },
+
+  /**
+   * 🆕 GET /api/v1/lookups/partners/search?query={term}&limit=50
+   * Server-side search for partners (autocomplete)
+   * Min 2 characters required
+   */
+  searchPartners: async (query: string, limit: number = 50): Promise<PartnerComboDto[]> => {
+    const url = buildUrl('/lookups/partners/search', { query, limit });
+    const response = await apiClient.get<PartnerComboDto[]>(url);
     return response.data;
   },
 
@@ -95,9 +107,21 @@ export const lookupApi = {
   /**
    * GET /api/v1/lookups/articles
    * Stored Procedure: spArtikalComboUlaz
+   * ⚠️ DEPRECATED: Use searchArticles() instead for better performance (11000+ records)
    */
   getArticles: async (): Promise<ArticleComboDto[]> => {
     const response = await apiClient.get<ArticleComboDto[]>('/lookups/articles');
+    return response.data;
+  },
+
+  /**
+   * 🆕 GET /api/v1/lookups/articles/search?query={term}&limit=50
+   * Server-side search for articles (autocomplete)
+   * Min 2 characters required
+   */
+  searchArticles: async (query: string, limit: number = 50): Promise<ArticleComboDto[]> => {
+    const url = buildUrl('/lookups/articles/search', { query, limit });
+    const response = await apiClient.get<ArticleComboDto[]>(url);
     return response.data;
   },
 
