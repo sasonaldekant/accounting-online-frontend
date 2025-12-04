@@ -27,6 +27,12 @@ interface ArticleAutocompleteProps {
  * - Max 50 rezultata
  * - Prikazuje jedinicu mere
  * 
+ * Backend mapping:
+ * - idArtikal → IdArtikal
+ * - nazivArtikla → NazivArtikla
+ * - sifraArtikal → SifraArtikal
+ * - jedinicaMere → JedinicaMere
+ * 
  * @example
  * ```tsx
  * <ArticleAutocomplete
@@ -78,7 +84,11 @@ export const ArticleAutocomplete: React.FC<ArticleAutocompleteProps> = ({
       disabled={disabled}
       fullWidth={fullWidth}
       // Format opcije: "A001 - Artikal XYZ"
-      getOptionLabel={(option) => `${option.code} - ${option.name}`}
+      getOptionLabel={(option) => {
+        const code = option.sifraArtikal;
+        const name = option.nazivArtikla;
+        return `${code} - ${name}`;
+      }}
       // Disable client-side filtering - server radi filtering!
       filterOptions={(x) => x}
       // Empty message kada nema rezultata
@@ -92,11 +102,13 @@ export const ArticleAutocomplete: React.FC<ArticleAutocompleteProps> = ({
         <Box component="li" {...props}>
           <Box>
             <Typography variant="body1">
-              <strong>{option.code}</strong> - {option.name}
+              <strong>{option.sifraArtikal}</strong> - {option.nazivArtikla}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Jedinica: {option.unit}
-            </Typography>
+            {option.jedinicaMere && (
+              <Typography variant="caption" color="text.secondary">
+                Jedinica: {option.jedinicaMere}
+              </Typography>
+            )}
           </Box>
         </Box>
       )}
