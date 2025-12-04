@@ -82,16 +82,37 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateDocumentDto) => api.document.create(data),
+    mutationFn: (data: CreateDocumentDto) => {
+      console.log('🚀 Sending to API:', data);
+      console.log('📋 Payload fields:');
+      console.log('  - documentTypeCode:', data.documentTypeCode, typeof data.documentTypeCode);
+      console.log('  - documentNumber:', data.documentNumber, typeof data.documentNumber);
+      console.log('  - date:', data.date, typeof data.date);
+      console.log('  - partnerId:', data.partnerId, typeof data.partnerId);
+      console.log('  - organizationalUnitId:', data.organizationalUnitId, typeof data.organizationalUnitId);
+      console.log('  - referentId:', data.referentId, typeof data.referentId);
+      console.log('  - taxationMethodId:', data.taxationMethodId, typeof data.taxationMethodId);
+      console.log('  - statusId:', data.statusId, typeof data.statusId);
+      return api.document.create(data);
+    },
     onSuccess: (newDocument) => {
+      console.log('✅ Document Created:', newDocument);
       navigate(`/documents/${newDocument.id}`);
     },
     onError: (err: any) => {
+      console.error('❌ Create Error:', err);
+      console.error('Error details:', {
+        status: err?.status,
+        message: err?.message,
+        errors: err?.errors,
+        title: err?.title,
+      });
       setError(err?.message || 'Greška pri kreiranju dokumenta');
     },
   });
 
   const handleChange = (field: keyof CreateDocumentDto, value: any) => {
+    console.log(`📝 Field changed: ${field} =`, value, typeof value);
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
@@ -99,16 +120,19 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('📋 Form Submit - Current formData:', formData);
+    
     // Validacija
     if (!formData.documentNumber) {
       setError('Broj dokumenta je obavezan');
       return;
     }
-    if (!formData.organizationalUnitId) {
+    if (!formData.organizationalUnitId || formData.organizationalUnitId === 0) {
       setError('Magacin je obavezan');
       return;
     }
     
+    console.log('✅ Validation passed, submitting...');
     createMutation.mutate(formData);
   };
 
@@ -215,9 +239,11 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                     (p: PartnerComboDto) => (p.idPartner ?? p.id) === formData.partnerId
                   ) || null
                 }
-                onChange={(_, value) =>
-                  handleChange('partnerId', value ? value.idPartner ?? value.id : null)
-                }
+                onChange={(_, value) => {
+                  const id = value ? (value.idPartner ?? value.id) : null;
+                  console.log('🔍 Partner selected:', value, 'ID:', id);
+                  handleChange('partnerId', id);
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -244,12 +270,11 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                       (ou.idOrganizacionaJedinica ?? ou.id) === formData.organizationalUnitId
                   ) || null
                 }
-                onChange={(_, value) =>
-                  handleChange(
-                    'organizationalUnitId',
-                    value ? value.idOrganizacionaJedinica ?? value.id ?? 0 : 0
-                  )
-                }
+                onChange={(_, value) => {
+                  const id = value ? (value.idOrganizacionaJedinica ?? value.id ?? 0) : 0;
+                  console.log('🏪 Org Unit selected:', value, 'ID:', id);
+                  handleChange('organizationalUnitId', id);
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params} 
@@ -276,9 +301,11 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                     (r: ReferentComboDto) => (r.idRadnik ?? r.id) === formData.referentId
                   ) || null
                 }
-                onChange={(_, value) =>
-                  handleChange('referentId', value ? value.idRadnik ?? value.id : null)
-                }
+                onChange={(_, value) => {
+                  const id = value ? (value.idRadnik ?? value.id) : null;
+                  console.log('👤 Referent selected:', value, 'ID:', id);
+                  handleChange('referentId', id);
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -301,9 +328,11 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                       (tm.idNacinOporezivanja ?? tm.id) === formData.taxationMethodId
                   ) || null
                 }
-                onChange={(_, value) =>
-                  handleChange('taxationMethodId', value ? value.idNacinOporezivanja ?? value.id : null)
-                }
+                onChange={(_, value) => {
+                  const id = value ? (value.idNacinOporezivanja ?? value.id) : null;
+                  console.log('💼 Taxation method selected:', value, 'ID:', id);
+                  handleChange('taxationMethodId', id);
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
