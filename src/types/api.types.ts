@@ -1,81 +1,82 @@
 // ============================================================================
 // LOOKUP/COMBO TYPES - Backend Stored Procedures Results
+// ⚠️ IMPORTANT: Property names match backend C# DTOs (PascalCase)
+// Backend uses System.Text.Json with default camelCase serialization
 // ============================================================================
 
 export interface PartnerComboDto {
-  id: number;
-  code: string;
-  name: string;
-  city: string;
-  statusId: number;
-  statusName: string;
-  taxationMethodId: number;
-  calculateExcise: boolean;
-  calculateTax: boolean;
-  referentId: number | null;
+  idPartner: number;                // IdPartner
+  nazivPartnera: string;            // NazivPartnera
+  mesto: string | null;             // Mesto
+  opis: string | null;              // Opis (Status description)
+  idStatus: number;                 // IdStatus
+  idNacinOporezivanjaNabavka: number | null;  // IdNacinOporezivanjaNabavka
+  obracunAkciza: number;            // ObracunAkciza (0 or 1)
+  obracunPorez: number;             // ObracunPorez (0 or 1)
+  idReferent: number | null;        // IdReferent
+  sifraPartner: string | null;      // SifraPartner
 }
 
 export interface OrganizationalUnitComboDto {
-  id: number;
-  code: string;
-  name: string;
-  city: string;
+  idOrganizacionaJedinica: number;  // IdOrganizacionaJedinica
+  naziv: string;                    // Naziv
+  mesto: string | null;             // Mesto
+  sifra: string | null;             // Sifra
 }
 
 export interface TaxationMethodComboDto {
-  id: number;
-  description: string;
-  calculateExcise: boolean;
-  calculateTax: boolean;
-  calculateAuxiliaryTax: boolean;
+  idNacinOporezivanja: number;      // IdNacinOporezivanja
+  opis: string;                     // Opis
+  obracunAkciza: number;            // ObracunAkciza (0 or 1)
+  obracunPorez: number;             // ObracunPorez (0 or 1)
+  obracunPorezPomocni: number;      // ObracunPorezPomocni (0 or 1)
 }
 
 export interface ReferentComboDto {
-  id: number;
-  code: string;
-  fullName: string;
+  idRadnik: number;                 // IdRadnik
+  imeRadnika: string;               // ImeRadnika
+  sifraRadnika: string | null;      // SifraRadnika
 }
 
 export interface ReferenceDocumentComboDto {
-  id: number;
-  documentNumber: string;
-  date: string;
-  partnerName: string;
+  idDokument: number;               // IdDokument
+  brojDokumenta: string;            // BrojDokumenta
+  datum: string;                    // Datum (ISO 8601)
+  nazivPartnera: string;            // NazivPartnera
 }
 
 export interface TaxRateComboDto {
-  id: string; // char(2) - "01", "02", "03"
-  name: string;
-  percentage: number;
+  idPoreskaStopa: string;           // IdPoreskaStopa - char(2): "01", "02", "03"
+  naziv: string;                    // Naziv
 }
 
 export interface ArticleComboDto {
-  id: number;
-  code: string;
-  name: string;
-  unitOfMeasure: string;
-  taxRateId: string;
-  taxRatePercentage: number;
-  excisePerUnit: number;
-  quantityCoefficient: number;
-  hasLot: boolean;
-  purchasePrice: number;
-  isAgriculturalProduct: boolean;
+  idArtikal: number;                // IdArtikal
+  sifraArtikal: string;             // SifraArtikal
+  nazivArtikla: string;             // NazivArtikla
+  jedinicaMere: string | null;      // JedinicaMere
+  idPoreskaStopa: string | null;    // IdPoreskaStopa
+  procenatPoreza: number;           // ProcenatPoreza
+  akciza: number;                   // Akciza
+  koeficijentKolicine: number;      // KoeficijentKolicine
+  imaLot: boolean;                  // ImaLot
+  otkupnaCena: number | null;       // OtkupnaCena
+  poljoprivredniProizvod: boolean;  // PoljoprivredniProizvod
 }
 
 export interface CostTypeComboDto {
-  id: number;
-  name: string;
-  description: string;
-  specificationName: string;
-  calculateTax: boolean;
-  basicCostTypeId: number;
+  idUlazniRacuniIzvedeni: number;   // IdUlazniRacuniIzvedeni
+  naziv: string;                    // Naziv
+  opis: string | null;              // Opis
+  nazivSpecifikacije: string | null; // NazivSpecifikacije
+  obracunPorez: number;             // ObracunPorez (0 or 1)
+  idUlazniRacuniOsnovni: number;    // IdUlazniRacuniOsnovni
 }
 
 export interface CostDistributionMethodComboDto {
-  id: number;
-  name: string;
-  description: string;
+  idNacinDeljenjaTroskova: number;  // IdNacinDeljenjaTroskova
+  naziv: string;                    // Naziv
+  opisNacina: string;               // OpisNacina
 }
 
 // ============================================================================

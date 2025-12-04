@@ -26,6 +26,12 @@ interface PartnerAutocompleteProps {
  * - Loading indicator
  * - Max 50 rezultata
  * 
+ * Backend mapping:
+ * - idPartner → IdPartner
+ * - nazivPartnera → NazivPartnera
+ * - sifraPartner → SifraPartner
+ * - mesto → Mesto
+ * 
  * @example
  * ```tsx
  * <PartnerAutocomplete
@@ -76,8 +82,13 @@ export const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
       loading={isLoading}
       disabled={disabled}
       fullWidth={fullWidth}
-      // Format opcije: "P001 - Partner ABC"
-      getOptionLabel={(option) => `${option.code} - ${option.name}`}
+      // Format opcije: "P001 - Partner ABC (Grad)"
+      getOptionLabel={(option) => {
+        const code = option.sifraPartner || 'N/A';
+        const name = option.nazivPartnera;
+        const city = option.mesto ? ` (${option.mesto})` : '';
+        return `${code} - ${name}${city}`;
+      }}
       // Disable client-side filtering - server radi filtering!
       filterOptions={(x) => x}
       // Empty message kada nema rezultata
