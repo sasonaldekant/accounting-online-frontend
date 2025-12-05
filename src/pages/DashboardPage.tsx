@@ -87,11 +87,13 @@ export const DashboardPage: React.FC = () => {
         </Box>
       ) : null}
 
-      {statsError ? (
+      {!!statsError && (
         <Alert severity="info" sx={{ mb: 4 }}>
-          Statistika trenutno nije dostupna: {String((statsError as Error)?.message || 'Nepoznata greška')}. Koristite brze akcije ispod za rad sa dokumentima.
+          Statistika trenutno nije dostupna:{' '}
+          {String((statsError as Error)?.message || 'Nepoznata greška')}. Koristite brze
+          akcije ispod za rad sa dokumentima.
         </Alert>
-      ) : null}
+      )}
 
       <Grid container spacing={3}>
         {/* Quick Actions */}
@@ -132,11 +134,12 @@ export const DashboardPage: React.FC = () => {
               </Box>
             ) : null}
 
-            {docsError ? (
+            {!!docsError && (
               <Alert severity="info" sx={{ mt: 2 }}>
-                Dokumenti trenutno nisu dostupni: {String((docsError as Error)?.message || 'Nepoznata greška')}
+                Dokumenti trenutno nisu dostupni:{' '}
+                {String((docsError as Error)?.message || 'Nepoznata greška')}
               </Alert>
-            ) : null}
+            )}
 
             {!docsLoading && !docsError && recentDocs && recentDocs.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
