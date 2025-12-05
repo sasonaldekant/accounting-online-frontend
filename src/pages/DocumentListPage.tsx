@@ -45,7 +45,8 @@ export const DocumentListPage: React.FC = () => {
       const response = await api.document.list({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        searchTerm: searchQuery || undefined,
+        // TODO: Backend needs to implement document number search
+        // searchTerm is not supported yet in backend API
       });
       return response;
     },
@@ -71,10 +72,14 @@ export const DocumentListPage: React.FC = () => {
   const documents = data?.items || [];
   const totalCount = data?.totalCount || 0;
 
+  // Filter documents client-side for now (until backend implements search)
   const filteredDocuments = documents.filter((doc) => {
+    const matchesSearch =
+      !searchQuery ||
+      doc.documentNumber?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === 'all' || doc.statusId?.toString() === statusFilter;
-    return matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -99,6 +104,7 @@ export const DocumentListPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
+              helperText="Pretraga radi lokalno (backend search nije implementiran)"
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -121,7 +127,7 @@ export const DocumentListPage: React.FC = () => {
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Greška pri učitavanju dokumenata. Proverite da li je backend pokrenut i da li je CORS podešen.
+          Greška pri učitavanju dokumenata: {(error as Error)?.message || 'Proverite da li je backend pokrenut i da li je CORS podešen.'}
         </Alert>
       )}
 
