@@ -81,17 +81,17 @@ export const DashboardPage: React.FC = () => {
       </Box>
 
       {/* Quick Stats - Only show if API is available */}
-      {statsLoading && (
+      {statsLoading ? (
         <Box display="flex" justifyContent="center" my={4}>
           <CircularProgress />
         </Box>
-      )}
+      ) : null}
 
-      {statsError && (
+      {statsError ? (
         <Alert severity="info" sx={{ mb: 4 }}>
           Statistika trenutno nije dostupna: {String((statsError as Error)?.message || 'Nepoznata greška')}. Koristite brze akcije ispod za rad sa dokumentima.
         </Alert>
-      )}
+      ) : null}
 
       <Grid container spacing={3}>
         {/* Quick Actions */}
@@ -126,19 +126,19 @@ export const DashboardPage: React.FC = () => {
               Nedavni Dokumenti
             </Typography>
 
-            {docsLoading && (
+            {docsLoading ? (
               <Box display="flex" justifyContent="center" my={4}>
                 <CircularProgress size={32} />
               </Box>
-            )}
+            ) : null}
 
-            {docsError && (
+            {docsError ? (
               <Alert severity="info" sx={{ mt: 2 }}>
                 Dokumenti trenutno nisu dostupni: {String((docsError as Error)?.message || 'Nepoznata greška')}
               </Alert>
-            )}
+            ) : null}
 
-            {!docsLoading && !docsError && recentDocs && recentDocs.length === 0 && (
+            {!docsLoading && !docsError && recentDocs && recentDocs.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography color="text.secondary">
                   Nema nedavnih dokumenata.
@@ -152,9 +152,9 @@ export const DashboardPage: React.FC = () => {
                   Kreiraj prvi dokument
                 </Button>
               </Box>
-            )}
+            ) : null}
 
-            {!docsLoading && !docsError && recentDocs && recentDocs.length > 0 && (
+            {!docsLoading && !docsError && recentDocs && recentDocs.length > 0 ? (
               <>
                 <Box sx={{ mt: 2 }}>
                   {recentDocs.map((doc: any) => (
@@ -197,7 +197,7 @@ export const DashboardPage: React.FC = () => {
                   Vidi sve dokumente
                 </Button>
               </>
-            )}
+            ) : null}
           </Paper>
         </Grid>
       </Grid>
