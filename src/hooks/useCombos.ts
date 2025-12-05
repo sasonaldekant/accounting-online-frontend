@@ -45,6 +45,8 @@ const queryKeys = {
 
 /**
  * SP 1: Svi partneri
+ * ⚠️ DEPRECATED for autocomplete: Use usePartnerAutocomplete instead
+ * This hook loads 6000+ records and should only be used when necessary
  */
 export const usePartners = (): UseQueryResult<PartnerComboDto[], unknown> => {
   return useQuery(
@@ -53,6 +55,7 @@ export const usePartners = (): UseQueryResult<PartnerComboDto[], unknown> => {
     {
       staleTime: 5 * 60 * 1000, // 5 minuta
       cacheTime: 30 * 60 * 1000, // 30 minuta
+      enabled: false, // ⚠️ DISABLED by default - use usePartnerAutocomplete
     }
   );
 };
@@ -217,12 +220,13 @@ export const useCostArticles = (
 
 // ==========================================
 // COMBO HOOK - SVE ODJEDNOM (za initial load)
-// ⚠️ DOES NOT INCLUDE ARTICLES (11000+ records)
-// Use autocomplete search for articles instead
+// ⚠️ EXCLUDES:
+// - Partners (6000+ records) - Use usePartnerAutocomplete
+// - Articles (11000+ records) - Use autocomplete search
 // ==========================================
 
 export interface AllCombos {
-  partners: PartnerComboDto[];
+  // partners - REMOVED: Use usePartnerAutocomplete hook
   orgUnits: OrganizationalUnitComboDto[];
   taxationMethods: TaxationMethodComboDto[];
   referents: ReferentComboDto[];
@@ -240,29 +244,29 @@ export const useAllCombos = (
     ['lookups', 'all', docTypeId] as const,
     async () => {
       const [
-        partners,
+        // partners - REMOVED to prevent timeout
         orgUnits,
         taxationMethods,
         referents,
         documentsND,
         taxRates,
-        // articles - REMOVED to prevent timeout
+        // articles - REMOVED: 11000+ records cause timeout
         costTypes,
         costDistributionMethods,
       ] = await Promise.all([
-        api.lookup.getPartners(),
+        // api.lookup.getPartners(), - REMOVED: 6000+ records
         api.lookup.getOrganizationalUnits(docTypeId),
         api.lookup.getTaxationMethods(),
         api.lookup.getReferents(),
         api.lookup.getReferenceDocuments(),
         api.lookup.getTaxRates(),
-        // api.lookup.getArticles(), - REMOVED: 11000+ records cause timeout
+        // api.lookup.getArticles(), - REMOVED: 11000+ records
         api.lookup.getCostTypes(),
         api.lookup.getCostDistributionMethods(),
       ]);
 
       return {
-        partners,
+        // partners - NOT included, use usePartnerAutocomplete
         orgUnits,
         taxationMethods,
         referents,
