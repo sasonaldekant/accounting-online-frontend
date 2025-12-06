@@ -452,7 +452,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ document, onChan
                         </Typography>
                       </TableCell>
                     </TableRow>
-                  ) : (
+                  ) : 
                     advanceVATItems.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>
@@ -507,8 +507,6 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ document, onChan
                         </TableCell>
                       </TableRow>
                     ))}
-                  )
-                }
                 </TableBody>
               </Table>
             </TableContainer>
