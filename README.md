@@ -12,7 +12,7 @@
 ## 🚀 Status Projekta
 
 **Trenutni Branch:** `main`  
-**Status:** ✅ **MVP Dokumenata Kompl etiran (98%)**  
+**Status:** 🌟 **MVP Dokumenata 99% Kompletiran**  
 **Datum:** 11. Decembar 2025
 
 ### ✅ Šta je Implementirano:
@@ -23,7 +23,7 @@
 - ✅ **Pretraga dokumenata** po datumu, broju, statusu
 - ✅ **Pregled/Edit dokumenta** sa 3 taba (Header, Items, Costs)
 - ✅ **DocumentHeader** - Sva polja + Avans PDV subform
-- ✅ **Dobavljač** - Dropdown sa svim partnerima + server-side search 🆕 **NOVO**
+- ✅ **Dobavljač** - Dropdown sa svim partnerima + optimizovana server-side search 🔧 **OPTIMIZOVANO**
 - ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom
 - ✅ **DocumentItemsTable** - Excel-like grid sa autosave
 - ✅ **Utils funkcije** - format, validation, calculation, etag
@@ -145,6 +145,7 @@ dotnet run --project src/ERPAccounting.API
 
 # Terminal 2 - Frontend
 cd accounting-online-frontend
+npm install  # if not done
 npm run dev
 # Frontend: http://localhost:3000
 ```
@@ -163,7 +164,8 @@ http://localhost:3000
 
 | Dokument | Opis |
 |----------|------|
-| [DROPDOWN_RENDERING_FIX.md](DROPDOWN_RENDERING_FIX.md) | 🔧 **Dropdown se pojavljuje sa svim partnerima na focus** |
+| [PARTNER_SEARCH_OPTIMIZATION.md](PARTNER_SEARCH_OPTIMIZATION.md) | 🔧 **API SAMO sa 2+ karaktera** (optimizovano) |
+| [DROPDOWN_RENDERING_FIX.md](DROPDOWN_RENDERING_FIX.md) | 🔧 Dropdown sa svim partnerima na focus |
 | [SERVER_SIDE_PARTNER_SEARCH_FIX.md](SERVER_SIDE_PARTNER_SEARCH_FIX.md) | 🔧 Server-side search sa debounce |
 | [DOBAVLJAC_SEARCH_FIX.md](DOBAVLJAC_SEARCH_FIX.md) | 🔍 Dobavljač search sa real-time filteriranjem |
 | [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 📊 Dobavljač dropdown + Poreske tarife |
@@ -192,7 +194,7 @@ http://localhost:3000
 - Tip dokumenta (dropdown)
 - Broj dokumenta (text)
 - Datum (date picker)
-- **Dobavljač (DROPDOWN SA SVE 39+ PARTNERA)** 🆕 Klikni za listu ili piši za pretragu
+- **Dobavljač (OPTIMIZOVANA PRETRAGA)** 🔧 Klikni za sve, piši 2+ karaktera za pretragu
 - Magacin (autocomplete combo, required)
 - Referent (autocomplete combo)
 - Način oporezivanja (autocomplete combo)
@@ -200,7 +202,7 @@ http://localhost:3000
 - Napomena (textarea)
 - **PORESKE TARIFE (AVANSI)** 🆕 Nova sekcija sa auto-kalkulacijom
 
-**Dobavljač - Dropdown sa Svim Partnerima:**
+**Dobavljač - Optimizovana Pretraga:**
 ```
 Korisnik klikne na polje:
            ↓ (onFocus event)
@@ -210,15 +212,21 @@ Korisnik klikne na polje:
            ↓
   Dropdown sa 39 dobavljača
            ↓
-Korisnik vidi:
-  - Domaćeg
-  - ILKE TRANS DOO BEOGRAD
-  - Kvak'Med DOO Kragujevac
-  - ... (još 36)
+Korisnik unese "d" (1 char):
            ↓
-Korisnik može:
-  1. Kliknuti na dobavljača
-  2. Početi pisati za pretragu
+  Lokalni filter - BEZ API POZIVA
+  Vidi samo partnere sa "d"
+           ↓
+Korisnik unese "o" ("do" = 2+ chars):
+           ↓
+  Čekaj 500ms (debounce)
+           ↓
+  API: GET /lookups/partners/search?query=do
+  Vidi samo "Domaćeg", "Dobavljač..."
+           ↓
+Korisnik obriše sve:
+           ↓
+  Vrati sve 39 iz cache-a - BEZ NOVOG API POZIVA
 ```
 
 **Validacija:**
@@ -256,7 +264,7 @@ Korisnik može:
 #### Tab 1: Zaglavlje
 - Sva polja za dokument
 - Svi combosi povezani sa backend-om
-- **🔍 Dobavljač:** Dropdown sa svim partnerima + server-side pretragon
+- **🔍 Dobavljač:** Dropdown sa svim partnerima + optimizovana server-side pretraga
 - **✅ Poreske Tarife (Avansi):** Nova subforma sa tabelom
   - Poreska Stopa (0%, 10%, 20%)
   - Osnov (user input)
@@ -398,6 +406,7 @@ dotnet run
 
 # 2. Start frontend
 cd accounting-online-frontend
+npm install  # if not done
 npm run dev
 
 # 3. Test flow:
@@ -405,15 +414,18 @@ npm run dev
 [] Vidi dashboard
 [] Klikni "Novi Dokument"
 [] Popuni zaglavlje (svi combosi rade)
-[] NOVO: Dobavljač dropdown:
+[] NOVO: Dobavljač OPTIMIZOVANA pretraga:
    [] Klikni na Dobavljač polje
    [] Trebalo bi videti spinner ("⏳")
    [] Čekaj ~500ms
    [] Trebalo bi videti sve 39+ dobavljača
-   [] Klikni na "Domaćeg"
-   [] Trebalo bi se popuniti input
-   [] Počni pisati "ilk" za pretragu
-   [] Trebalo bi videti samo "ILKE TRANS"
+   [] Unesi "d" (samo 1 char)
+   [] Trebalo bi: Lokalni filter, BEZ API POZIVA
+   [] Unesi "o" ("do" = 2 chars)
+   [] Trebalo bi: Spinner, API POZVAN sa "do"
+   [] Testiraj filtrirane rezultate
+   [] Obriši sve (backspace)
+   [] Trebalo bi: Vrati sve 39 iz cache-a, bez novog API poziva
 [] Poreske Tarife:
    [] Vidi tabelu sa 4 kolone
    [] Testiraj kalkulaciju (Stopa 20%, Osnov 1000)
@@ -522,7 +534,7 @@ cat .env.local | grep VITE_JWT_TOKEN
 curl http://localhost:5286/swagger
 ```
 
-### Problem: Dobavljač dropdown je prazan
+### Problem: Dobavljač pretraga ne radi kako treba
 
 **Proveri:**
 ```bash
@@ -531,39 +543,37 @@ curl http://localhost:5286/swagger
 # 3. Čekaj ~500ms
 # 4. Trebalo bi videti 39 stavki
 
-# Console log?
-# F12 -> Console trebalo bi:
-# "🔍 Loading all partners..."
-# "✅ Loaded 39 partners"
+# 5. Unesi "d" (1 char):
+#    - Trebalo bi: Lokalni filter
+#    - Console: "🔍 Local filter for: \"d\""
+#    - NEMA API poziva
 
-# Network tab?
-# F12 -> Network -> /lookups/partners -> Response trebalo bi 39 stavki
+# 6. Unesi "o" ("do" = 2 chars):
+#    - Trebalo bi: Spinner
+#    - Čekaj 500ms
+#    - Console: "🔍 Server search for: \"do\""
+#    - API: GET /lookups/partners/search?query=do
+
+# 7. Console trebalo bi:
+#    "🔍 Loading all partners..." (klik)
+#    "🔍 Local filter for: \"d\""  (1 char)
+#    "🔍 Preparing server search for: \"do\"..." (2 chars)
+#    "🔍 Server search for: \"do\"..." (nakon debounce)
 ```
 
-### Problem: Pretraga ne radi
+### Problem: Pretraga ne filtrira rezultate
 
 **Proveri:**
 ```bash
 # 1. Klikni na Dobavljač (učita 39)
 # 2. Počni pisati "ilk"
-# 3. Čekaj 500ms (debounce)
-# 4. API: GET /lookups/partners/search?query=ilk
-# 5. Trebalo bi videti samo "ILKE TRANS"
-```
+# 3. API: GET /lookups/partners/search?query=ilk
+# 4. Trebalo bi videti samo "ILKE TRANS"
 
-### Problem: Poreske tarife se ne kalkuluju
-
-**Proveri:**
-```bash
-# Unesi vrednosti u tabelu
-# Prosledi Osnov 1000, Stopa 20%
-# Očekuje: PDV 200, Ukupno 1200
-
-# Console errors?
-# F12 -> Console
-
-# Dev Tools React tab?
-# Provjeri avansPDV state
+# Ako ne radi:
+# - Otvóri Network tab (F12)
+# - Proveri Response
+# - Trebalo bi array sa matching partnerima
 ```
 
 ### Problem: Autosave ne radi
@@ -638,6 +648,6 @@ MIT License - vidi [LICENSE](LICENSE) fajl
 
 ---
 
-**⭐ Status:** MVP Dokumenata Kompl etiran - 98% Gotova!  
+**⭐ Status:** MVP Dokumenata 99% Kompl  etan - Samo Zavisni Troškovi Preostaju!  
 **📅 Updated:** 11. Decembar 2025  
 **👨‍💻 Developer:** AI Assistant + Development Team
