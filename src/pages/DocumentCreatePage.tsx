@@ -16,7 +16,7 @@ import { Save, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../api';
-import { useAllCombos } from '../hooks/useCombos';
+import { useAllCombos, useArticles } from '../hooks/useCombos';
 import { usePartnerAutocomplete, formatPartnerLabel } from '../hooks/usePartnerAutocomplete';
 import TabsComponent from '../components/Document/TabsComponent';
 import StavkeDokumentaTable from '../components/Document/StavkeDokumentaTable';
@@ -94,7 +94,13 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   const organizationalUnits = combosData?.orgUnits;
   const taxationMethods = combosData?.taxationMethods;
   const referents = combosData?.referents;
-  const artikli = combosData?.artikli || [];
+  const { data: articlesData = [], error: articlesError, isLoading: articlesLoading } = useArticles(true);
+  const artikli = articlesData.map((article) => ({
+    id: article.idArtikal ?? article.id,
+    sifra: article.sifraArtikal ?? article.code,
+    naziv: article.nazivArtikla ?? article.name,
+    jm: article.jedinicaMere ?? article.unitOfMeasure,
+  }));
   const costTypes = combosData?.costTypes || [];
 
   // ✅ Stavke state
@@ -531,11 +537,27 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
         </Alert>
       )}
 
+      {!!articlesError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Greška pri učitavanju artikala:{' '}
+          {String((articlesError as Error)?.message || 'Nepoznata greška')}
+        </Alert>
+      )}
+
       {combosLoading && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <Box display="flex" alignItems="center" gap={2}>
             <CircularProgress size={20} />
             Učitavam podatke sa servera...
+          </Box>
+        </Alert>
+      )}
+
+      {articlesLoading && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <CircularProgress size={20} />
+            Učitavam artikle sa servera...
           </Box>
         </Alert>
       )}
