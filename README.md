@@ -12,7 +12,7 @@
 ## 🚀 Status Projekta
 
 **Trenutni Branch:** `main`  
-**Status:** ✅ **MVP Dokumenata Kompl etiran (97%)**  
+**Status:** ✅ **MVP Dokumenata Kompl etiran (98%)**  
 **Datum:** 11. Decembar 2025
 
 ### ✅ Šta je Implementirano:
@@ -23,7 +23,7 @@
 - ✅ **Pretraga dokumenata** po datumu, broju, statusu
 - ✅ **Pregled/Edit dokumenta** sa 3 taba (Header, Items, Costs)
 - ✅ **DocumentHeader** - Sva polja + Avans PDV subform
-- ✅ **Dobavljač** - Server-side searchable input sa debounce 🆕 **NOVO**
+- ✅ **Dobavljač** - Dropdown sa svim partnerima + server-side search 🆕 **NOVO**
 - ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom
 - ✅ **DocumentItemsTable** - Excel-like grid sa autosave
 - ✅ **Utils funkcije** - format, validation, calculation, etag
@@ -163,7 +163,8 @@ http://localhost:3000
 
 | Dokument | Opis |
 |----------|------|
-| [SERVER_SIDE_PARTNER_SEARCH_FIX.md](SERVER_SIDE_PARTNER_SEARCH_FIX.md) | 🔧 **Server-side search sa debounce za dobavljače** |
+| [DROPDOWN_RENDERING_FIX.md](DROPDOWN_RENDERING_FIX.md) | 🔧 **Dropdown se pojavljuje sa svim partnerima na focus** |
+| [SERVER_SIDE_PARTNER_SEARCH_FIX.md](SERVER_SIDE_PARTNER_SEARCH_FIX.md) | 🔧 Server-side search sa debounce |
 | [DOBAVLJAC_SEARCH_FIX.md](DOBAVLJAC_SEARCH_FIX.md) | 🔍 Dobavljač search sa real-time filteriranjem |
 | [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 📊 Dobavljač dropdown + Poreske tarife |
 | [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | **⭐ START HERE** - Kompletan status implementacije |
@@ -191,7 +192,7 @@ http://localhost:3000
 - Tip dokumenta (dropdown)
 - Broj dokumenta (text)
 - Datum (date picker)
-- **Dobavljač (SERVER-SIDE SEARCH)** 🆕 Unesite min. 2 karaktera
+- **Dobavljač (DROPDOWN SA SVE 39+ PARTNERA)** 🆕 Klikni za listu ili piši za pretragu
 - Magacin (autocomplete combo, required)
 - Referent (autocomplete combo)
 - Način oporezivanja (autocomplete combo)
@@ -199,19 +200,25 @@ http://localhost:3000
 - Napomena (textarea)
 - **PORESKE TARIFE (AVANSI)** 🆕 Nova sekcija sa auto-kalkulacijom
 
-**Dobavljač - Server-Side Searchable Input:**
+**Dobavljač - Dropdown sa Svim Partnerima:**
 ```
-Korisnik piše:  "Dom"
-          ↓ (debounce 500ms)
-  Server Search: /lookups/partners/search?query=Dom
-          ↓
-  Dropdown se filtrira
-          ↓
-  Prikazuju se: "Domaćeg", "Domaćinski", itd.
-          ↓
-  Korisnik bira "Domaćeg"
-          ↓
-  Polje se popunjava sa "Domaćeg"
+Korisnik klikne na polje:
+           ↓ (onFocus event)
+  "Loading all partners..."
+           ↓ (API: GET /lookups/partners)
+  Čekaj ~500ms
+           ↓
+  Dropdown sa 39 dobavljača
+           ↓
+Korisnik vidi:
+  - Domaćeg
+  - ILKE TRANS DOO BEOGRAD
+  - Kvak'Med DOO Kragujevac
+  - ... (još 36)
+           ↓
+Korisnik može:
+  1. Kliknuti na dobavljača
+  2. Početi pisati za pretragu
 ```
 
 **Validacija:**
@@ -249,7 +256,7 @@ Korisnik piše:  "Dom"
 #### Tab 1: Zaglavlje
 - Sva polja za dokument
 - Svi combosi povezani sa backend-om
-- **🔍 Dobavljač:** Sada sa server-side pretragon (min. 2 karaktera)
+- **🔍 Dobavljač:** Dropdown sa svim partnerima + server-side pretragon
 - **✅ Poreske Tarife (Avansi):** Nova subforma sa tabelom
   - Poreska Stopa (0%, 10%, 20%)
   - Osnov (user input)
@@ -398,15 +405,16 @@ npm run dev
 [] Vidi dashboard
 [] Klikni "Novi Dokument"
 [] Popuni zaglavlje (svi combosi rade)
-[] NOVO: Dobavljač sa server-side pretragon:
+[] NOVO: Dobavljač dropdown:
    [] Klikni na Dobavljač polje
-   [] Počni pisati "Do"
-   [] Trebalo bi videti filtrirane rezultate
-   [] Console: "🔍 Searching partners for: 'Do'..."
-   [] Trebalo bi čekati 500ms (debounce)
-   [] Bira dobavljača iz liste
-   [] Console: "✅ Selected partner: ..."
-[] NOVO: Poreske Tarife:
+   [] Trebalo bi videti spinner ("⏳")
+   [] Čekaj ~500ms
+   [] Trebalo bi videti sve 39+ dobavljača
+   [] Klikni na "Domaćeg"
+   [] Trebalo bi se popuniti input
+   [] Počni pisati "ilk" za pretragu
+   [] Trebalo bi videti samo "ILKE TRANS"
+[] Poreske Tarife:
    [] Vidi tabelu sa 4 kolone
    [] Testiraj kalkulaciju (Stopa 20%, Osnov 1000)
    [] Trebalo bi: PDV 200, Ukupno 1200
@@ -514,40 +522,33 @@ cat .env.local | grep VITE_JWT_TOKEN
 curl http://localhost:5286/swagger
 ```
 
-### Problem: Combosi ne ucitavaju
+### Problem: Dobavljač dropdown je prazan
 
 **Proveri:**
 ```bash
-# Backend endpointi rade?
-curl -H "Authorization: Bearer <token>" \
-  http://localhost:5286/api/v1/lookups/partners/search?query=dom
-
-# Console errors u browser-u?
-# F12 -> Console
-
-# Network tab?
-# F12 -> Network -> Filter: XHR
-```
-
-### Problem: Dobavljač pretraga ne radi
-
-**Proveri:**
-```bash
-# API endpoint /lookups/partners/search radi?
-curl -H "Authorization: Bearer <token>" \
-  http://localhost:5286/api/v1/lookups/partners/search?query=dom
-
-# Min. 2 karaktera?
-Prebacite na "Do" umesto "D"
+# 1. Klikni na Dobavljač polje
+# 2. Trebalo bi videti spinner
+# 3. Čekaj ~500ms
+# 4. Trebalo bi videti 39 stavki
 
 # Console log?
 # F12 -> Console trebalo bi:
-# "🔍 Searching partners for: 'Do'..."
-# "✅ Found 2 partners matching 'Do'"
+# "🔍 Loading all partners..."
+# "✅ Loaded 39 partners"
 
 # Network tab?
-# Trebalo bi videti zahtev sa delay (debounce 500ms)
-# F12 -> Network -> lookups/partners/search -> Response
+# F12 -> Network -> /lookups/partners -> Response trebalo bi 39 stavki
+```
+
+### Problem: Pretraga ne radi
+
+**Proveri:**
+```bash
+# 1. Klikni na Dobavljač (učita 39)
+# 2. Počni pisati "ilk"
+# 3. Čekaj 500ms (debounce)
+# 4. API: GET /lookups/partners/search?query=ilk
+# 5. Trebalo bi videti samo "ILKE TRANS"
 ```
 
 ### Problem: Poreske tarife se ne kalkuluju
@@ -637,6 +638,6 @@ MIT License - vidi [LICENSE](LICENSE) fajl
 
 ---
 
-**⭐ Status:** MVP Dokumenata Kompl etiran - 97% Gotova!  
+**⭐ Status:** MVP Dokumenata Kompl etiran - 98% Gotova!  
 **📅 Updated:** 11. Decembar 2025  
 **👨‍💻 Developer:** AI Assistant + Development Team
