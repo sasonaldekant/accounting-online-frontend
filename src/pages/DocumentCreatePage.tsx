@@ -96,6 +96,13 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   const organizationalUnits = combosData?.orgUnits;
   const taxationMethods = combosData?.taxationMethods;
   const referents = combosData?.referents;
+  const { data: articlesData = [], error: articlesError, isLoading: articlesLoading } = useArticles(true);
+  const artikli = articlesData.map((article) => ({
+    id: article.idArtikal ?? article.id,
+    sifra: article.sifraArtikal ?? article.code,
+    naziv: article.nazivArtikla ?? article.name,
+    jm: article.jedinicaMere ?? article.unitOfMeasure,
+  }));
   const costTypes = combosData?.costTypes || [];
 
   // ✅ ARTICLES - Load directly via API
@@ -567,11 +574,27 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
         </Alert>
       )}
 
-      {(combosLoading || loadingArticles) && (
+      {!!articlesError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Greška pri učitavanju artikala:{' '}
+          {String((articlesError as Error)?.message || 'Nepoznata greška')}
+        </Alert>
+      )}
+
+      {combosLoading && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <Box display="flex" alignItems="center" gap={2}>
             <CircularProgress size={20} />
             Učitavam podatke sa servera...
+          </Box>
+        </Alert>
+      )}
+
+      {articlesLoading && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <CircularProgress size={20} />
+            Učitavam artikle sa servera...
           </Box>
         </Alert>
       )}

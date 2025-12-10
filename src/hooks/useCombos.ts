@@ -142,15 +142,16 @@ export const useTaxRates = (): UseQueryResult<TaxRateComboDto[], unknown> => {
  * Loads on mount when hook is called and refetch() is invoked
  * Uses React Query caching to avoid repeated requests
  */
-export const useArticles = (): UseQueryResult<ArticleComboDto[], unknown> => {
+export const useArticles = (
+  enabled: boolean = false
+): UseQueryResult<ArticleComboDto[], unknown> => {
   return useQuery(
     queryKeys.articles,
     async () => api.lookup.getArticles(),
     {
       staleTime: 5 * 60 * 1000,
       cacheTime: 30 * 60 * 1000,
-      enabled: false, // ⚠️ Still disabled by default to avoid loading 11000+ records unnecessarily
-      // but can be manually triggered via refetch() in DocumentCreatePage
+      enabled, // ⚠️ DISABLED by default - use autocomplete search
     }
   );
 };
