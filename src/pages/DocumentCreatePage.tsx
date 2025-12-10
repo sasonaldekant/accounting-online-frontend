@@ -27,6 +27,7 @@ import type {
   ReferentComboDto,
   TaxationMethodComboDto,
 } from '../types/api.types';
+import type { TabConfig } from '../components/TabsComponent';
 
 const DOCUMENT_TYPES = [
   { code: 'UR', label: 'Ulazna Kalkulacija VP' },
@@ -56,7 +57,6 @@ function toISODateTime(dateStr: string | null): string | null {
 export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType }) => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
 
   // Use docType prop or default to 'UR'
   const defaultDocType = docType || 'UR';
@@ -161,241 +161,273 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   // Get document type label
   const docTypeLabel = DOCUMENT_TYPES.find(t => t.code === defaultDocType)?.label || 'Novi Dokument';
 
-  // ✅ ZAGLAVLJE SEKCIJA - Tab 1
+  // ✅ ZAGLAVLJE SEKCIJA - Tab 1 Content
   const HeaderSection = () => (
-    <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
-        {/* Row 1: Document Type + Document Number */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            required
-            select
-            label="Tip Dokumenta"
-            value={formData.documentTypeCode}
-            onChange={(e) => handleChange('documentTypeCode', e.target.value)}
-          >
-            {DOCUMENT_TYPES.map((type) => (
-              <MenuItem key={type.code} value={type.code}>
-                {type.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            required
-            label="Broj Dokumenta"
-            value={formData.documentNumber}
-            onChange={(e) => handleChange('documentNumber', e.target.value)}
-            placeholder="npr. T001/25"
-          />
-        </Grid>
-
-        {/* Row 2: Date + Due Date */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            required
-            label="Datum"
-            type="date"
-            value={formData.date}
-            onChange={(e) => handleChange('date', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Datum Dospeća"
-            type="date"
-            value={formData.dueDate || ''}
-            onChange={(e) => handleChange('dueDate', e.target.value || null)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        {/* Row 3: Partner + Partner Document Number */}
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            options={partners}
-            getOptionLabel={formatPartnerLabel}
-            loading={partnersLoading}
-            value={selectedPartner}
-            onChange={(_, value) => {
-              setSelectedPartner(value);
-              const id = value ? (value.idPartner ?? value.id) : null;
-              handleChange('partnerId', id);
-            }}
-            onInputChange={(_, newValue) => {
-              setPartnerSearchTerm(newValue);
-            }}
-            inputValue={partnerSearchTerm}
-            noOptionsText={
-              needsMoreChars
-                ? 'Unesite bar 2 karaktera za pretragu'
-                : isEmpty
-                ? 'Nema rezultata'
-                : 'Počnite kucati za pretragu...'
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Partner (Dobavljač)" 
-                placeholder="Unesite šifru ili naziv partnera"
-                helperText={
-                  needsMoreChars
-                    ? '🔍 Unesite bar 2 karaktera'
-                    : partnersLoading
-                    ? 'Učitavam...'
-                    : partners.length > 0
-                    ? `🔍 ${partners.length} rezultata (maks. 50)`
-                    : 'Počnite kucati za pretragu'
-                }
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Broj Dokumenta Partnera"
-            value={formData.partnerDocumentNumber || ''}
-            onChange={(e) => handleChange('partnerDocumentNumber', e.target.value || null)}
-            placeholder="Broj fakture dobavljača"
-          />
-        </Grid>
-
-        {/* Row 4: Partner Document Date + Currency Date */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Datum Dokumenta Partnera"
-            type="date"
-            value={formData.partnerDocumentDate || ''}
-            onChange={(e) => handleChange('partnerDocumentDate', e.target.value || null)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Datum Valute"
-            type="date"
-            value={formData.currencyDate || ''}
-            onChange={(e) => handleChange('currencyDate', e.target.value || null)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        {/* Row 5: Organizational Unit + Referent */}
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            options={organizationalUnits || []}
-            getOptionLabel={(option) => {
-              const code = option.sifra ?? option.code ?? 'N/A';
-              const name = option.naziv ?? option.name ?? '';
-              return `${code} - ${name}`;
-            }}
-            loading={combosLoading}
-            value={
-              organizationalUnits?.find(
-                (ou: OrganizationalUnitComboDto) =>
-                  (ou.idOrganizacionaJedinica ?? ou.id) === formData.organizationalUnitId
-              ) || null
-            }
-            onChange={(_, value) => {
-              const id = value ? (value.idOrganizacionaJedinica ?? value.id ?? 0) : 0;
-              handleChange('organizationalUnitId', id);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params} 
-                required 
-                label="Magacin" 
-                placeholder="Izaberite magacin"
-                helperText={organizationalUnits ? `${organizationalUnits.length} magacina učitano` : 'Učitavam...'}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            options={referents || []}
-            getOptionLabel={(option) => {
-              const code = option.sifraRadnika ?? option.code ?? 'N/A';
-              const name = option.imePrezime ?? option.fullName ?? '';
-              return `${code} - ${name}`;
-            }}
-            loading={combosLoading}
-            value={
-              referents?.find(
-                (r: ReferentComboDto) => (r.idRadnik ?? r.id) === formData.referentId
-              ) || null
-            }
-            onChange={(_, value) => {
-              const id = value ? (value.idRadnik ?? value.id) : null;
-              handleChange('referentId', id);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Referent" 
-                placeholder="Izaberite referenta"
-                helperText={referents ? `${referents.length} referenata učitano` : 'Učitavam...'}
-              />
-            )}
-          />
-        </Grid>
-
-        {/* Row 6: Taxation Method */}
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            options={taxationMethods || []}
-            getOptionLabel={(option) => option.opis ?? option.description}
-            loading={combosLoading}
-            value={
-              taxationMethods?.find(
-                (tm: TaxationMethodComboDto) =>
-                  (tm.idNacinOporezivanja ?? tm.id) === formData.taxationMethodId
-              ) || null
-            }
-            onChange={(_, value) => {
-              const id = value ? (value.idNacinOporezivanja ?? value.id) : null;
-              handleChange('taxationMethodId', id);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Način Oporezivanja" 
-                placeholder="Izaberite"
-                helperText={taxationMethods ? `${taxationMethods.length} metoda učitano` : 'Učitavam...'}
-              />
-            )}
-          />
-        </Grid>
-
-        {/* Row 7: Notes (full width) */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Napomena"
-            multiline
-            rows={3}
-            value={formData.notes || ''}
-            onChange={(e) => handleChange('notes', e.target.value || null)}
-            placeholder="Dodatne napomene..."
-          />
-        </Grid>
+    <Grid container spacing={3}>
+      {/* Row 1: Document Type + Document Number */}
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          required
+          select
+          label="Tip Dokumenta"
+          value={formData.documentTypeCode}
+          onChange={(e) => handleChange('documentTypeCode', e.target.value)}
+        >
+          {DOCUMENT_TYPES.map((type) => (
+            <MenuItem key={type.code} value={type.code}>
+              {type.label}
+            </MenuItem>
+          ))}
+        </TextField>
       </Grid>
-    </Box>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          required
+          label="Broj Dokumenta"
+          value={formData.documentNumber}
+          onChange={(e) => handleChange('documentNumber', e.target.value)}
+          placeholder="npr. T001/25"
+        />
+      </Grid>
+
+      {/* Row 2: Date + Due Date */}
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          required
+          label="Datum"
+          type="date"
+          value={formData.date}
+          onChange={(e) => handleChange('date', e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Datum Dospeća"
+          type="date"
+          value={formData.dueDate || ''}
+          onChange={(e) => handleChange('dueDate', e.target.value || null)}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+
+      {/* Row 3: Partner + Partner Document Number */}
+      <Grid item xs={12} md={6}>
+        <Autocomplete
+          options={partners}
+          getOptionLabel={formatPartnerLabel}
+          loading={partnersLoading}
+          value={selectedPartner}
+          onChange={(_, value) => {
+            setSelectedPartner(value);
+            const id = value ? (value.idPartner ?? value.id) : null;
+            handleChange('partnerId', id);
+          }}
+          onInputChange={(_, newValue) => {
+            setPartnerSearchTerm(newValue);
+          }}
+          inputValue={partnerSearchTerm}
+          noOptionsText={
+            needsMoreChars
+              ? 'Unesite bar 2 karaktera za pretragu'
+              : isEmpty
+              ? 'Nema rezultata'
+              : 'Počnite kucati za pretragu...'
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Partner (Dobavljač)" 
+              placeholder="Unesite šifru ili naziv partnera"
+              helperText={
+                needsMoreChars
+                  ? '🔍 Unesite bar 2 karaktera'
+                  : partnersLoading
+                  ? 'Učitavam...'
+                  : partners.length > 0
+                  ? `🔍 ${partners.length} rezultata (maks. 50)`
+                  : 'Počnite kucati za pretragu'
+              }
+            />
+          )}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Broj Dokumenta Partnera"
+          value={formData.partnerDocumentNumber || ''}
+          onChange={(e) => handleChange('partnerDocumentNumber', e.target.value || null)}
+          placeholder="Broj fakture dobavljača"
+        />
+      </Grid>
+
+      {/* Row 4: Partner Document Date + Currency Date */}
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Datum Dokumenta Partnera"
+          type="date"
+          value={formData.partnerDocumentDate || ''}
+          onChange={(e) => handleChange('partnerDocumentDate', e.target.value || null)}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Datum Valute"
+          type="date"
+          value={formData.currencyDate || ''}
+          onChange={(e) => handleChange('currencyDate', e.target.value || null)}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+
+      {/* Row 5: Organizational Unit + Referent */}
+      <Grid item xs={12} md={6}>
+        <Autocomplete
+          options={organizationalUnits || []}
+          getOptionLabel={(option) => {
+            const code = option.sifra ?? option.code ?? 'N/A';
+            const name = option.naziv ?? option.name ?? '';
+            return `${code} - ${name}`;
+          }}
+          loading={combosLoading}
+          value={
+            organizationalUnits?.find(
+              (ou: OrganizationalUnitComboDto) =>
+                (ou.idOrganizacionaJedinica ?? ou.id) === formData.organizationalUnitId
+            ) || null
+          }
+          onChange={(_, value) => {
+            const id = value ? (value.idOrganizacionaJedinica ?? value.id ?? 0) : 0;
+            handleChange('organizationalUnitId', id);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params} 
+              required 
+              label="Magacin" 
+              placeholder="Izaberite magacin"
+              helperText={organizationalUnits ? `${organizationalUnits.length} magacina učitano` : 'Učitavam...'}
+            />
+          )}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <Autocomplete
+          options={referents || []}
+          getOptionLabel={(option) => {
+            const code = option.sifraRadnika ?? option.code ?? 'N/A';
+            const name = option.imePrezime ?? option.fullName ?? '';
+            return `${code} - ${name}`;
+          }}
+          loading={combosLoading}
+          value={
+            referents?.find(
+              (r: ReferentComboDto) => (r.idRadnik ?? r.id) === formData.referentId
+            ) || null
+          }
+          onChange={(_, value) => {
+            const id = value ? (value.idRadnik ?? value.id) : null;
+            handleChange('referentId', id);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Referent" 
+              placeholder="Izaberite referenta"
+              helperText={referents ? `${referents.length} referenata učitano` : 'Učitavam...'}
+            />
+          )}
+        />
+      </Grid>
+
+      {/* Row 6: Taxation Method */}
+      <Grid item xs={12} md={6}>
+        <Autocomplete
+          options={taxationMethods || []}
+          getOptionLabel={(option) => option.opis ?? option.description}
+          loading={combosLoading}
+          value={
+            taxationMethods?.find(
+              (tm: TaxationMethodComboDto) =>
+                (tm.idNacinOporezivanja ?? tm.id) === formData.taxationMethodId
+            ) || null
+          }
+          onChange={(_, value) => {
+            const id = value ? (value.idNacinOporezivanja ?? value.id) : null;
+            handleChange('taxationMethodId', id);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Način Oporezivanja" 
+              placeholder="Izaberite"
+              helperText={taxationMethods ? `${taxationMethods.length} metoda učitano` : 'Učitavam...'}
+            />
+          )}
+        />
+      </Grid>
+
+      {/* Row 7: Notes (full width) */}
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Napomena"
+          multiline
+          rows={3}
+          value={formData.notes || ''}
+          onChange={(e) => handleChange('notes', e.target.value || null)}
+          placeholder="Dodatne napomene..."
+        />
+      </Grid>
+    </Grid>
   );
+
+  // ✅ TABS CONFIGURATION
+  const tabs: TabConfig[] = [
+    {
+      id: 'zaglavlje',
+      label: 'Zaglavlje Dokumenta',
+      content: <Box sx={{ p: 3 }}><HeaderSection /></Box>,
+    },
+    {
+      id: 'stavke',
+      label: 'Stavke Dokumenta',
+      content: (
+        <Box sx={{ p: 3 }}>
+          <StavkeDokumentaTable 
+            stavke={stavke}
+            setStavke={setStavke}
+          />
+        </Box>
+      ),
+    },
+    {
+      id: 'troskovi',
+      label: 'Zavisni Troškovi',
+      content: (
+        <Box sx={{ p: 3 }}>
+          <TroskoviTable 
+            troskovi={troskovi}
+            setTroskovi={setTroskovi}
+            stavke={stavke}
+          />
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <Box>
@@ -437,29 +469,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
 
       {/* ✅ NOVO: TABS KOMPONENTA */}
       <Paper>
-        <TabsComponent activeTab={activeTab} setActiveTab={setActiveTab}>
-          {/* Tab 1: Zaglavlje */}
-          <Box>
-            <HeaderSection />
-          </Box>
-
-          {/* Tab 2: Stavke */}
-          <Box sx={{ p: 3 }}>
-            <StavkeDokumentaTable 
-              stavke={stavke}
-              setStavke={setStavke}
-            />
-          </Box>
-
-          {/* Tab 3: Zavisni Troškovi */}
-          <Box sx={{ p: 3 }}>
-            <TroskoviTable 
-              troskovi={troskovi}
-              setTroskovi={setTroskovi}
-              stavke={stavke}
-            />
-          </Box>
-        </TabsComponent>
+        <TabsComponent tabs={tabs} defaultTab="zaglavlje" />
 
         {/* Action Buttons */}
         <Box display="flex" justifyContent="flex-end" gap={2} sx={{ p: 3, borderTop: '1px solid #eee' }}>
