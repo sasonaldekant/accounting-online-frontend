@@ -18,9 +18,9 @@ import { useMutation } from '@tanstack/react-query';
 import { api } from '../api';
 import { useAllCombos } from '../hooks/useCombos';
 import { usePartnerAutocomplete, formatPartnerLabel } from '../hooks/usePartnerAutocomplete';
-import TabsComponent from '../components/TabsComponent';
-import StavkeDokumentaTable from '../components/StavkeDokumentaTable';
-import TroskoviTable from '../components/TroskoviTable';
+import TabsComponent from '../components/Document/TabsComponent';
+import StavkeDokumentaTable from '../components/Document/StavkeDokumentaTable';
+import TroskoviTable from '../components/Document/TroskoviTable';
 import type { 
   CreateDocumentDto,
   PartnerComboDto,
@@ -28,7 +28,7 @@ import type {
   ReferentComboDto,
   TaxationMethodComboDto,
 } from '../types/api.types';
-import type { TabConfig } from '../components/TabsComponent';
+import type { TabConfig } from '../components/Document/TabsComponent';
 
 const DOCUMENT_TYPES = [
   { code: 'UR', label: 'Ulazna Kalkulacija VP' },
