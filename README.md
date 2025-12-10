@@ -12,8 +12,8 @@
 ## 🚀 Status Projekta
 
 **Trenutni Branch:** `main`  
-**Status:** ✅ **MVP Dokumenata Kompl etiran (95%)**  
-**Datum:** 10. Decembar 2025
+**Status:** ✅ **MVP Dokumenata Kompl etiran (96%)**  
+**Datum:** 11. Decembar 2025
 
 ### ✅ Šta je Implementirano:
 
@@ -23,7 +23,7 @@
 - ✅ **Pretraga dokumenata** po datumu, broju, statusu
 - ✅ **Pregled/Edit dokumenta** sa 3 taba (Header, Items, Costs)
 - ✅ **DocumentHeader** - Sva polja + Avans PDV subform
-- ✅ **Dobavljač** - Select dropdown sa API podatcima 🆕
+- ✅ **Dobavljač** - Searchable dropdown sa API podacima 🆕 **NOVO**
 - ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom 🆕
 - ✅ **DocumentItemsTable** - Excel-like grid sa autosave
 - ✅ **Utils funkcije** - format, validation, calculation, etag
@@ -163,7 +163,8 @@ http://localhost:3000
 
 | Dokument | Opis |
 |----------|------|
-| [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 🆕 **Dobavljač dropdown + Poreske tarife** |
+| [DOBAVLJAC_SEARCH_FIX.md](DOBAVLJAC_SEARCH_FIX.md) | 🔍 **Dobavljač search sa real-time filteriranjem** |
+| [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 📊 Dobavljač dropdown + Poreske tarife |
 | [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | **⭐ START HERE** - Kompletan status implementacije |
 | [CURRENT_STATE_ANALYSIS.md](docs/CURRENT_STATE_ANALYSIS.md) | Detaljna analiza koda i nedostataka |
 | [FIXES_SUMMARY.md](docs/FIXES_SUMMARY.md) | Pregled rešenih problema |
@@ -189,13 +190,26 @@ http://localhost:3000
 - Tip dokumenta (dropdown)
 - Broj dokumenta (text)
 - Datum (date picker)
-- **Dobavljač (SELECT DROPDOWN)** ✅ Sada sa API podacima
+- **Dobavljač (SEARCHABLE INPUT)** 🆕 Unesi karaktere za pretragu
 - Magacin (autocomplete combo, required)
 - Referent (autocomplete combo)
 - Način oporezivanja (autocomplete combo)
 - Datum dospeca (date picker)
 - Napomena (textarea)
-- **PORESKE TARIFE (AVANSI)** ✅ Nova sekcija sa auto-kalkulacijom
+- **PORESKE TARIFE (AVANSI)** 🆕 Nova sekcija sa auto-kalkulacijom
+
+**Dobavljač - Searchable Dropdown:**
+```
+Korisnik piše:  "Dom"
+          ↓
+  Dropdown se filtrira
+          ↓
+  Prikazuju se: "Domaćeg", "Domaćinski", itd.
+          ↓
+  Korisnik bira "Domaćeg"
+          ↓
+  Polje se popunjava sa "Domaćeg"
+```
 
 **Validacija:**
 - Obavezna polja označena
@@ -232,7 +246,7 @@ http://localhost:3000
 #### Tab 1: Zaglavlje
 - Sva polja za dokument
 - Svi combosi povezani sa backend-om
-- **✅ Dobavljač:** Sada kao SELECT dropdown
+- **🔍 Dobavljač:** Sada sa real-time pretragon filtrom
 - **✅ Poreske Tarife (Avansi):** Nova subforma sa tabelom
   - Poreska Stopa (0%, 10%, 20%)
   - Osnov (user input)
@@ -381,11 +395,15 @@ npm run dev
 [] Vidi dashboard
 [] Klikni "Novi Dokument"
 [] Popuni zaglavlje (svi combosi rade)
-[] NOVO: Vidi Select dropdown za Dobavljača
-[] NOVO: Vidi tabelu za Poreske Tarife (Avansi)
-[] NOVO: Testiraj kalkulaciju PDV-a:
-   - Unesi: Stopa 20%, Osnov 1000
-   - Trebalo bi: PDV 200, Ukupno 1200
+[] NOVO: Dobavljač sa pretragon:
+   [] Klikni na Dobavljač polje
+   [] Počni pisati "Dom"
+   [] Trebalo bi videti filtrirane rezultate
+   [] Bira dobavljača iz liste
+[] NOVO: Poreske Tarife:
+   [] Vidi tabelu sa 4 kolone
+   [] Testiraj kalkulaciju (Stopa 20%, Osnov 1000)
+   [] Trebalo bi: PDV 200, Ukupno 1200
 [] Klikni "Sačuvaj i Nastavi"
 [] Dodaj 3 stavke (autosave radi)
 [] Proveri Tab/Enter navigaciju
@@ -505,7 +523,7 @@ curl -H "Authorization: Bearer <token>" \
 # F12 -> Network -> Filter: XHR
 ```
 
-### Problem: Dobavljač dropdown nema podataka
+### Problem: Dobavljač pretraga ne radi
 
 **Proveri:**
 ```bash
@@ -517,6 +535,9 @@ curl -H "Authorization: Bearer <token>" \
 # F12 -> Console trebalo bi:
 # "✅ Loaded 47 partners"
 
+# Klikni na Dobavljač i unesi tekst
+# Trebalo bi videti filtrirane rezultate
+
 # Network tab?
 # F12 -> Network -> lookups/partners -> Response
 ```
@@ -527,7 +548,7 @@ curl -H "Authorization: Bearer <token>" \
 ```bash
 # Unesi vrednosti u tabelu
 # Prosledi Osnov 1000, Stopa 20%
-# O očekuje: PDV 200, Ukupno 1200
+# Očekuje: PDV 200, Ukupno 1200
 
 # Console errors?
 # F12 -> Console
@@ -608,6 +629,6 @@ MIT License - vidi [LICENSE](LICENSE) fajl
 
 ---
 
-**⭐ Status:** MVP Dokumenata Kompl etiran - 95% Gotova!  
-**📅 Updated:** 10. Decembar 2025  
+**⭐ Status:** MVP Dokumenata Kompl etiran - 96% Gotova!  
+**📅 Updated:** 11. Decembar 2025  
 **👨‍💻 Developer:** AI Assistant + Development Team
