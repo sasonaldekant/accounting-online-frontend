@@ -12,7 +12,7 @@
 ## 🚀 Status Projekta
 
 **Trenutni Branch:** `main`  
-**Status:** ✅ **MVP Dokumenata Kompl etiran (96%)**  
+**Status:** ✅ **MVP Dokumenata Kompl etiran (97%)**  
 **Datum:** 11. Decembar 2025
 
 ### ✅ Šta je Implementirano:
@@ -23,8 +23,8 @@
 - ✅ **Pretraga dokumenata** po datumu, broju, statusu
 - ✅ **Pregled/Edit dokumenta** sa 3 taba (Header, Items, Costs)
 - ✅ **DocumentHeader** - Sva polja + Avans PDV subform
-- ✅ **Dobavljač** - Searchable dropdown sa API podacima 🆕 **NOVO**
-- ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom 🆕
+- ✅ **Dobavljač** - Server-side searchable input sa debounce 🆕 **NOVO**
+- ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom
 - ✅ **DocumentItemsTable** - Excel-like grid sa autosave
 - ✅ **Utils funkcije** - format, validation, calculation, etag
 - ✅ **Routing** - Kompletna navigacija
@@ -163,7 +163,8 @@ http://localhost:3000
 
 | Dokument | Opis |
 |----------|------|
-| [DOBAVLJAC_SEARCH_FIX.md](DOBAVLJAC_SEARCH_FIX.md) | 🔍 **Dobavljač search sa real-time filteriranjem** |
+| [SERVER_SIDE_PARTNER_SEARCH_FIX.md](SERVER_SIDE_PARTNER_SEARCH_FIX.md) | 🔧 **Server-side search sa debounce za dobavljače** |
+| [DOBAVLJAC_SEARCH_FIX.md](DOBAVLJAC_SEARCH_FIX.md) | 🔍 Dobavljač search sa real-time filteriranjem |
 | [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 📊 Dobavljač dropdown + Poreske tarife |
 | [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | **⭐ START HERE** - Kompletan status implementacije |
 | [CURRENT_STATE_ANALYSIS.md](docs/CURRENT_STATE_ANALYSIS.md) | Detaljna analiza koda i nedostataka |
@@ -190,7 +191,7 @@ http://localhost:3000
 - Tip dokumenta (dropdown)
 - Broj dokumenta (text)
 - Datum (date picker)
-- **Dobavljač (SEARCHABLE INPUT)** 🆕 Unesi karaktere za pretragu
+- **Dobavljač (SERVER-SIDE SEARCH)** 🆕 Unesite min. 2 karaktera
 - Magacin (autocomplete combo, required)
 - Referent (autocomplete combo)
 - Način oporezivanja (autocomplete combo)
@@ -198,9 +199,11 @@ http://localhost:3000
 - Napomena (textarea)
 - **PORESKE TARIFE (AVANSI)** 🆕 Nova sekcija sa auto-kalkulacijom
 
-**Dobavljač - Searchable Dropdown:**
+**Dobavljač - Server-Side Searchable Input:**
 ```
 Korisnik piše:  "Dom"
+          ↓ (debounce 500ms)
+  Server Search: /lookups/partners/search?query=Dom
           ↓
   Dropdown se filtrira
           ↓
@@ -246,7 +249,7 @@ Korisnik piše:  "Dom"
 #### Tab 1: Zaglavlje
 - Sva polja za dokument
 - Svi combosi povezani sa backend-om
-- **🔍 Dobavljač:** Sada sa real-time pretragon filtrom
+- **🔍 Dobavljač:** Sada sa server-side pretragon (min. 2 karaktera)
 - **✅ Poreske Tarife (Avansi):** Nova subforma sa tabelom
   - Poreska Stopa (0%, 10%, 20%)
   - Osnov (user input)
@@ -387,7 +390,7 @@ cd ../accounting-online-backend
 dotnet run
 
 # 2. Start frontend
-cd ../accounting-online-frontend
+cd accounting-online-frontend
 npm run dev
 
 # 3. Test flow:
@@ -395,11 +398,14 @@ npm run dev
 [] Vidi dashboard
 [] Klikni "Novi Dokument"
 [] Popuni zaglavlje (svi combosi rade)
-[] NOVO: Dobavljač sa pretragon:
+[] NOVO: Dobavljač sa server-side pretragon:
    [] Klikni na Dobavljač polje
-   [] Počni pisati "Dom"
+   [] Počni pisati "Do"
    [] Trebalo bi videti filtrirane rezultate
+   [] Console: "🔍 Searching partners for: 'Do'..."
+   [] Trebalo bi čekati 500ms (debounce)
    [] Bira dobavljača iz liste
+   [] Console: "✅ Selected partner: ..."
 [] NOVO: Poreske Tarife:
    [] Vidi tabelu sa 4 kolone
    [] Testiraj kalkulaciju (Stopa 20%, Osnov 1000)
@@ -514,7 +520,7 @@ curl http://localhost:5286/swagger
 ```bash
 # Backend endpointi rade?
 curl -H "Authorization: Bearer <token>" \
-  http://localhost:5286/api/v1/lookups/partners
+  http://localhost:5286/api/v1/lookups/partners/search?query=dom
 
 # Console errors u browser-u?
 # F12 -> Console
@@ -527,19 +533,21 @@ curl -H "Authorization: Bearer <token>" \
 
 **Proveri:**
 ```bash
-# API endpoint /lookups/partners vraća podatke?
+# API endpoint /lookups/partners/search radi?
 curl -H "Authorization: Bearer <token>" \
-  http://localhost:5286/api/v1/lookups/partners
+  http://localhost:5286/api/v1/lookups/partners/search?query=dom
+
+# Min. 2 karaktera?
+Prebacite na "Do" umesto "D"
 
 # Console log?
 # F12 -> Console trebalo bi:
-# "✅ Loaded 47 partners"
-
-# Klikni na Dobavljač i unesi tekst
-# Trebalo bi videti filtrirane rezultate
+# "🔍 Searching partners for: 'Do'..."
+# "✅ Found 2 partners matching 'Do'"
 
 # Network tab?
-# F12 -> Network -> lookups/partners -> Response
+# Trebalo bi videti zahtev sa delay (debounce 500ms)
+# F12 -> Network -> lookups/partners/search -> Response
 ```
 
 ### Problem: Poreske tarife se ne kalkuluju
@@ -629,6 +637,6 @@ MIT License - vidi [LICENSE](LICENSE) fajl
 
 ---
 
-**⭐ Status:** MVP Dokumenata Kompl etiran - 96% Gotova!  
+**⭐ Status:** MVP Dokumenata Kompl etiran - 97% Gotova!  
 **📅 Updated:** 11. Decembar 2025  
 **👨‍💻 Developer:** AI Assistant + Development Team
