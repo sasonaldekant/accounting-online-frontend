@@ -11,9 +11,9 @@
 
 ## 🚀 Status Projekta
 
-**Trenutni Branch:** `feature/complete-implementation-with-menu`  
-**Status:** ✅ **MVP Dokumenata Kompl etiran (90%)**  
-**Datum:** 29.11.2025
+**Trenutni Branch:** `main`  
+**Status:** ✅ **MVP Dokumenata Kompl etiran (95%)**  
+**Datum:** 10. Decembar 2025
 
 ### ✅ Šta je Implementirano:
 
@@ -23,6 +23,8 @@
 - ✅ **Pretraga dokumenata** po datumu, broju, statusu
 - ✅ **Pregled/Edit dokumenta** sa 3 taba (Header, Items, Costs)
 - ✅ **DocumentHeader** - Sva polja + Avans PDV subform
+- ✅ **Dobavljač** - Select dropdown sa API podatcima 🆕
+- ✅ **Poreske Tarife (Avansi)** - Tabela sa auto-kalkulacijom 🆕
 - ✅ **DocumentItemsTable** - Excel-like grid sa autosave
 - ✅ **Utils funkcije** - format, validation, calculation, etag
 - ✅ **Routing** - Kompletna navigacija
@@ -98,7 +100,7 @@ git clone https://github.com/sasonaldekant/accounting-online-frontend.git
 cd accounting-online-frontend
 
 # 2. Checkout branch sa implementacijom
-git checkout feature/complete-implementation-with-menu
+git checkout main
 
 # 3. Install dependencies
 npm install
@@ -161,6 +163,7 @@ http://localhost:3000
 
 | Dokument | Opis |
 |----------|------|
+| [CHANGELOG_DOBAVLJAC_TARIFE.md](CHANGELOG_DOBAVLJAC_TARIFE.md) | 🆕 **Dobavljač dropdown + Poreske tarife** |
 | [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | **⭐ START HERE** - Kompletan status implementacije |
 | [CURRENT_STATE_ANALYSIS.md](docs/CURRENT_STATE_ANALYSIS.md) | Detaljna analiza koda i nedostataka |
 | [FIXES_SUMMARY.md](docs/FIXES_SUMMARY.md) | Pregled rešenih problema |
@@ -186,12 +189,13 @@ http://localhost:3000
 - Tip dokumenta (dropdown)
 - Broj dokumenta (text)
 - Datum (date picker)
-- Partner/Dobavljač (autocomplete combo)
+- **Dobavljač (SELECT DROPDOWN)** ✅ Sada sa API podacima
 - Magacin (autocomplete combo, required)
 - Referent (autocomplete combo)
 - Način oporezivanja (autocomplete combo)
 - Datum dospeca (date picker)
 - Napomena (textarea)
+- **PORESKE TARIFE (AVANSI)** ✅ Nova sekcija sa auto-kalkulacijom
 
 **Validacija:**
 - Obavezna polja označena
@@ -199,7 +203,7 @@ http://localhost:3000
 - Backend error handling
 
 **Flow:**
-1. Popuni zaglavlje
+1. Popuni zaglavlje (uključujući Poreske Tarife)
 2. Klikni "Sačuvaj i Nastavi"
 3. POST `/api/v1/documents`
 4. Redirect na `/documents/{id}` za dodavanje stavki
@@ -228,7 +232,12 @@ http://localhost:3000
 #### Tab 1: Zaglavlje
 - Sva polja za dokument
 - Svi combosi povezani sa backend-om
-- Avans PDV subform (accordion)
+- **✅ Dobavljač:** Sada kao SELECT dropdown
+- **✅ Poreske Tarife (Avansi):** Nova subforma sa tabelom
+  - Poreska Stopa (0%, 10%, 20%)
+  - Osnov (user input)
+  - PDV Iznos (auto-calculated: osnov × stopa / 100)
+  - Ukupno (auto-calculated: osnov + pdv)
 - Real-time save on change
 
 #### Tab 2: Stavke
@@ -372,6 +381,11 @@ npm run dev
 [] Vidi dashboard
 [] Klikni "Novi Dokument"
 [] Popuni zaglavlje (svi combosi rade)
+[] NOVO: Vidi Select dropdown za Dobavljača
+[] NOVO: Vidi tabelu za Poreske Tarife (Avansi)
+[] NOVO: Testiraj kalkulaciju PDV-a:
+   - Unesi: Stopa 20%, Osnov 1000
+   - Trebalo bi: PDV 200, Ukupno 1200
 [] Klikni "Sačuvaj i Nastavi"
 [] Dodaj 3 stavke (autosave radi)
 [] Proveri Tab/Enter navigaciju
@@ -491,6 +505,37 @@ curl -H "Authorization: Bearer <token>" \
 # F12 -> Network -> Filter: XHR
 ```
 
+### Problem: Dobavljač dropdown nema podataka
+
+**Proveri:**
+```bash
+# API endpoint /lookups/partners vraća podatke?
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:5286/api/v1/lookups/partners
+
+# Console log?
+# F12 -> Console trebalo bi:
+# "✅ Loaded 47 partners"
+
+# Network tab?
+# F12 -> Network -> lookups/partners -> Response
+```
+
+### Problem: Poreske tarife se ne kalkuluju
+
+**Proveri:**
+```bash
+# Unesi vrednosti u tabelu
+# Prosledi Osnov 1000, Stopa 20%
+# O očekuje: PDV 200, Ukupno 1200
+
+# Console errors?
+# F12 -> Console
+
+# Dev Tools React tab?
+# Provjeri avansPDV state
+```
+
 ### Problem: Autosave ne radi
 
 **Proveri:**
@@ -502,7 +547,7 @@ curl -H "Authorization: Bearer <token>" \
 # F12 -> Console
 
 # Debounce delay?
-# Ačekaj 800ms posle promene
+# Čekaj 800ms posle promene
 ```
 
 ---
@@ -563,6 +608,6 @@ MIT License - vidi [LICENSE](LICENSE) fajl
 
 ---
 
-**⭐ Status:** MVP Dokumenata Kompl etiran - Spremno za testiranje!  
-**📅 Updated:** 29.11.2025  
+**⭐ Status:** MVP Dokumenata Kompl etiran - 95% Gotova!  
+**📅 Updated:** 10. Decembar 2025  
 **👨‍💻 Developer:** AI Assistant + Development Team
