@@ -44,7 +44,7 @@ function toISODateTime(dateStr: string | null): string | null {
 export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('zaglavlje');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | string[] | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(false);
 
@@ -74,22 +74,25 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
     { poreskaStopaId: 0, poreskaStopaVal: 0, osnov: 0, pdvIznos: 0, ukupno: 0 }
   ]);
 
-  // FORM DATA
+  // TAXATION METHODS (NAČINI OPOREZIVANJA)
+  const [taxationMethods, setTaxationMethods] = useState<any[]>([]);
+
+  // FORM DATA - ✅ ISPRAVKA TIPOVA
   const [formData, setFormData] = useState<CreateDocumentDto>({
     documentTypeCode: defaultDocType,
     documentNumber: '',
     date: new Date().toISOString().split('T')[0],
     partnerId: null,
-    organizationalUnitId: 0,
+    organizationalUnitId: null, // ✅ ISPRAVLJENO: 0 → null
     referentId: null,
     dueDate: null,
     currencyDate: null,
     partnerDocumentNumber: null,
     partnerDocumentDate: null,
-    taxationMethodId: null,
+    taxationMethodId: null, // ✅ Biće number nakon odabira
     statusId: 1,
-    currencyId: null,
-    exchangeRate: null,
+    currencyId: null, // ✅ ISPRAVLJENO: null → biće number nakon odabira
+    exchangeRate: 1.0,
     notes: null,
   });
 
@@ -97,7 +100,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
   const [stavke, setStavke] = useState<Stavka[]>([]);
   const [troskovi, setTroskovi] = useState<Trosak[]>([]);
 
-  // UČITAJ ARTIKLE NA INICIJALIZACIJI
+  // UČITAJ ARTIKLE I TAXATION METHODS NA INICIJALIZACIJI
   useEffect(() => {
     const loadAllData = async () => {
       try {
@@ -112,10 +115,16 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
         const taksData = await api.lookup.getTaxRates();
         setPoreskeStope(taksData);
         console.log(`✅ Loaded ${taksData.length} tax rates`);
+
+        // ✅ NOVO: Učitaj načine oporezivanja
+        const taxMethodsData = await api.lookup.getTaxationMethods();
+        setTaxationMethods(taxMethodsData);
+        console.log(`✅ Loaded ${taxMethodsData.length} taxation methods`);
       } catch (err) {
         console.error('❌ Failed to load data:', err);
         setAllArtikli([]);
         setPoreskeStope([]);
+        setTaxationMethods([]);
       } finally {
         setLoadingData(false);
       }
@@ -142,22 +151,22 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
 
     // SCENARIO 2: 1 karakter - NEMA API, prikazuj helper
     if (searchTerm.trim().length === 1) {
-      console.log(`🔍 Partner search: 1 char \"${searchTerm}\" - waiting for 2+`);
+      console.log(`🔍 Partner search: 1 char "${searchTerm}" - waiting for 2+`);
       setPartners([]);
       setShowPartnerDropdown(true); // ✅ PRIKAŽI dropdown sa porukom!
       return;
     }
 
     // SCENARIO 3: 2+ karaktera - API sa debounce
-    console.log(`🔍 Partner search: preparing for \"${searchTerm}\" (500ms debounce)`);
+    console.log(`🔍 Partner search: preparing for "${searchTerm}" (500ms debounce)`);
     setPartnerSearchLoading(true);
     setShowPartnerDropdown(true); // ✅ Čim korisnik dostigne 2+ karaktera
     partnerDebounceTimer.current = setTimeout(async () => {
       try {
-        console.log(`🔍 Partner search: API call for \"${searchTerm}\"...`);
+        console.log(`🔍 Partner search: API call for "${searchTerm}"...`);
         const searchResults = await api.lookup.searchPartners(searchTerm, 50);
         setPartners(searchResults);
-        console.log(`✅ Partner search: found ${searchResults.length} results for \"${searchTerm}\"`);
+        console.log(`✅ Partner search: found ${searchResults.length} results for "${searchTerm}"`);
       } catch (err) {
         console.error('❌ Partner search error:', err);
         setPartners([]);
@@ -187,22 +196,22 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
 
     // SCENARIO 2: 1 karakter - NEMA API
     if (searchTerm.trim().length === 1) {
-      console.log(`🔍 Article search: 1 char \"${searchTerm}\" - waiting for 2+`);
+      console.log(`🔍 Article search: 1 char "${searchTerm}" - waiting for 2+`);
       setArtikli([]);
       setShowArtikliDropdown(true); // ✅ PRIKAŽI dropdown sa porukom!
       return;
     }
 
     // SCENARIO 3: 2+ karaktera - API sa debounce
-    console.log(`🔍 Article search: preparing for \"${searchTerm}\" (500ms debounce)`);
+    console.log(`🔍 Article search: preparing for "${searchTerm}" (500ms debounce)`);
     setArtikliSearchLoading(true);
     setShowArtikliDropdown(true);
     artikliDebounceTimer.current = setTimeout(async () => {
       try {
-        console.log(`🔍 Article search: API call for \"${searchTerm}\"...`);
+        console.log(`🔍 Article search: API call for "${searchTerm}"...`);
         const searchResults = await api.lookup.searchArticles(searchTerm, 50);
         setArtikli(searchResults);
-        console.log(`✅ Article search: found ${searchResults.length} results for \"${searchTerm}\"`);
+        console.log(`✅ Article search: found ${searchResults.length} results for "${searchTerm}"`);
       } catch (err) {
         console.error('❌ Article search error:', err);
         setArtikli([]);
@@ -212,12 +221,21 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
     }, 500);
   }, []);
 
+  // ✅ ISPRAVLJENA PARTNER SELEKCIJA
   const handlePartnerSelect = (partner: PartnerComboDto) => {
     setSelectedPartner(partner);
     setPartnerSearchTerm(partner.naziv || partner.name || '');
-    setFormData({ ...formData, partnerId: partner.idPartner || partner.id });
+    
+    // ✅ ISPRAVLJENO: Sigurna konverzija ID-a
+    const partnerId = partner.idPartner || partner.id;
+    if (partnerId) {
+      setFormData({ ...formData, partnerId });
+      console.log(`✅ Partner selected: "${partner.naziv || partner.name}" (ID: ${partnerId})`);
+    } else {
+      console.warn('⚠️ Partner ID is missing!');
+    }
+    
     setShowPartnerDropdown(false);
-    console.log(`✅ Partner selected: \"${partner.naziv || partner.name}\"`);
   };
 
   const handleArtikliSelect = (article: ArticleComboDto, rowIndex: number) => {
@@ -232,7 +250,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
     setShowArtikliDropdown(false);
     setArtikliSearchTerm('');
     setEditingArticleIndex(null);
-    console.log(`✅ Article selected: \"${article.naziv || article.name}\" for row ${rowIndex}`);
+    console.log(`✅ Article selected: "${article.naziv || article.name}" for row ${rowIndex}`);
   };
 
   // KALKULACIJA PDV-a
@@ -259,6 +277,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
         currencyDate: toISODateTime(data.currencyDate),
         partnerDocumentDate: toISODateTime(data.partnerDocumentDate),
       };
+      console.log('📤 Sending document payload:', payload);
       return api.document.create(payload);
     },
     onSuccess: (newDocument) => {
@@ -266,20 +285,38 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
       setTimeout(() => navigate(`/documents/${newDocument.id}`), 1000);
     },
     onError: (err: any) => {
-      setError(err?.message || 'Greška pri kreiranju dokumenta');
+      console.error('❌ Document creation error:', err);
+      
+      // ✅ DETALJNIJE PRIKAZIVANJE GREŠAKA
+      if (err?.response?.data?.errors) {
+        const validationErrors = Object.entries(err.response.data.errors)
+          .map(([field, msgs]: [string, any]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join('\n');
+        setError(validationErrors);
+      } else {
+        setError(err?.message || 'Greška pri kreiranju dokumenta');
+      }
     },
   });
 
+  // ✅ ISPRAVLJENA VALIDACIJA PRE SUBMIT-A
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.documentNumber) {
-      setError('Broj dokumenta je obavezan');
+    setError(null);
+    setSuccess(null);
+
+    const errors: string[] = [];
+    if (!formData.documentNumber) errors.push('Broj dokumenta je obavezan');
+    if (!formData.date) errors.push('Datum dokumenta je obavezan');
+    if (!formData.organizationalUnitId) errors.push('Magacin je obavezan');
+    if (!formData.taxationMethodId) errors.push('Način oporezivanja je obavezan');
+    if (!formData.currencyId) errors.push('Valuta je obavezna');
+    
+    if (errors.length > 0) {
+      setError(errors);
       return;
     }
-    if (!formData.organizationalUnitId) {
-      setError('Magacin je obavezan');
-      return;
-    }
+
     createMutation.mutate(formData);
   };
 
@@ -294,7 +331,19 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
         </button>
       </div>
 
-      {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
+      {/* ✅ POBOLJŠANO PRIKAZIVANJE GREŠAKA */}
+      {error && (
+        <div className={`${styles.alert} ${styles.alertDanger}`}>
+          <strong>Greške pri validaciji:</strong>
+          <ul>
+            {Array.isArray(error) ? (
+              error.map((err, idx) => <li key={idx}>{err}</li>)
+            ) : (
+              <li>{error}</li>
+            )}
+          </ul>
+        </div>
+      )}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}
 
       <div className={styles.btnGroup}>
@@ -335,7 +384,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
             <div className={styles.formSectionTitle}>📋 OSNOVNA POLJA DOKUMENTA</div>
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label>Broj dokumenta:</label>
+                <label>Broj dokumenta: <span style={{color: 'red'}}>*</span></label>
                 <input
                   type="text"
                   value={formData.documentNumber}
@@ -344,7 +393,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Datum dokumenta:</label>
+                <label>Datum dokumenta: <span style={{color: 'red'}}>*</span></label>
                 <input
                   type="date"
                   value={formData.date}
@@ -360,14 +409,34 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                 </select>
               </div>
             </div>
+
+            {/* ✅ DODATO: Dodatna datumska polja */}
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Datum otpremnice:</label>
+                <input
+                  type="date"
+                  value={formData.dueDate || ''}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value || null })}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Datum promene:</label>
+                <input
+                  type="date"
+                  value={formData.currencyDate || ''}
+                  onChange={(e) => setFormData({ ...formData, currencyDate: e.target.value || null })}
+                />
+              </div>
+            </div>
           </div>
 
           <div className={styles.formSection}>
-            <div className={styles.formSectionTitle}>🏢 DOBABLJAČ I MAGACIN</div>
+            <div className={styles.formSectionTitle}>🏢 DOBAVLJAČ I MAGACIN</div>
             <div className={styles.formRow}>
-              {/* DOBABLJAČ - PURE TYPING SEARCH */}
+              {/* DOBAVLJAČ - PURE TYPING SEARCH */}
               <div className={styles.formGroup}>
-                <label>Dobabljač (piši 2+ karaktera za pretragu):</label>
+                <label>Dobavljač (piši 2+ karaktera za pretragu):</label>
                 <div className={styles.autocompleteContainer}>
                   <div className={styles.inputWrapper} style={{ position: 'relative' }}>
                     <input
@@ -376,7 +445,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                       value={partnerSearchTerm}
                       onChange={(e) => handlePartnerSearchChange(e.target.value)}
                       onBlur={() => setTimeout(() => setShowPartnerDropdown(false), 200)}
-                      placeholder="Piši dobabljača (min. 2 karaktera)..."
+                      placeholder="Piši dobavljača (min. 2 karaktera)..."
                       autoComplete="off"
                     />
                     {partnerSearchLoading && (
@@ -425,12 +494,12 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                 </div>
               </div>
 
-              {/* MAGACIN */}
+              {/* MAGACIN - ✅ REQUIRED */}
               <div className={styles.formGroup}>
-                <label>Magacin:</label>
+                <label>Magacin: <span style={{color: 'red'}}>*</span></label>
                 <select
                   value={formData.organizationalUnitId || ''}
-                  onChange={(e) => setFormData({ ...formData, organizationalUnitId: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, organizationalUnitId: e.target.value ? parseInt(e.target.value) : null })}
                 >
                   <option value="">-- Izaberite magacin --</option>
                   {combosData?.orgUnits?.map((ou) => (
@@ -462,22 +531,41 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
           <div className={styles.formSection}>
             <div className={styles.formSectionTitle}>💰 FINANSIJSKI PARAMETRI</div>
             <div className={styles.formRow}>
+              {/* VALUTA - ✅ REQUIRED + PROPER MAPPING */}
               <div className={styles.formGroup}>
-                <label>Valuta:</label>
-                <select value={formData.currencyId || 'RSD'} onChange={(e) => setFormData({ ...formData, currencyId: e.target.value })}>
-                  <option>RSD</option>
-                  <option>EUR</option>
-                  <option>USD</option>
+                <label>Valuta: <span style={{color: 'red'}}>*</span></label>
+                <select 
+                  value={formData.currencyId || ''} 
+                  onChange={(e) => setFormData({ ...formData, currencyId: e.target.value ? parseInt(e.target.value) : null })}
+                >
+                  <option value="">-- Izaberite valutu --</option>
+                  {combosData?.currencies?.map((curr: any) => (
+                    <option key={curr.idValuta || curr.id} value={curr.idValuta || curr.id}>
+                      {curr.kodValute || curr.code || curr.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* OPOREZIVANJE - ✅ REQUIRED + NUMBER TYPE + PROPER MAPPING */}
               <div className={styles.formGroup}>
-                <label>Oporezivanje:</label>
-                <select value={formData.taxationMethodId || 'PDV na nabavci'} onChange={(e) => setFormData({ ...formData, taxationMethodId: e.target.value })}>
-                  <option>PDV na uvozu</option>
-                  <option>PDV na nabavci</option>
-                  <option>Bez PDV-a</option>
+                <label>Oporezivanje: <span style={{color: 'red'}}>*</span></label>
+                <select 
+                  value={formData.taxationMethodId || ''} 
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    taxationMethodId: e.target.value ? parseInt(e.target.value) : null 
+                  })}
+                >
+                  <option value="">-- Izaberite oporezivanje --</option>
+                  {taxationMethods.map((method: any) => (
+                    <option key={method.idNacinOporezivanja || method.id} value={method.idNacinOporezivanja || method.id}>
+                      {method.naziv || method.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className={styles.formGroup}>
                 <label>Narudžbenica (Ref.):</label>
                 <input
@@ -485,6 +573,18 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
                   value={formData.partnerDocumentNumber || ''}
                   onChange={(e) => setFormData({ ...formData, partnerDocumentNumber: e.target.value || null })}
                   placeholder="npr. NAR-2024-001"
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Kurs:</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={formData.exchangeRate || 1.0}
+                  onChange={(e) => setFormData({ ...formData, exchangeRate: parseFloat(e.target.value) || 1.0 })}
                 />
               </div>
             </div>
@@ -694,7 +794,7 @@ export const DocumentCreatePage: React.FC<DocumentCreatePageProps> = ({ docType 
           {stavke.length === 0 && (
             <div className={styles.formSection}>
               <p style={{ color: '#999', textAlign: 'center', padding: '20px' }}>
-                Nema dodanih stavki. Klikni \"Dodaj Stavku\" da počneš.
+                Nema dodanih stavki. Klikni "Dodaj Stavku" da počneš.
               </p>
             </div>
           )}
